@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     for(int i=0; i<rounds; i++){
         generateRange();
         
-        for(int i=0; i<1; i++){
+        for(int i=0; i<4; i++){
             kill(children[i], SIGUSR1);
         }
         
@@ -102,6 +102,8 @@ void generateRange(){
     }
 
     rangeFile << minValue << "," << maxValue;
+
+    rangeFile.close();
 }
 
 

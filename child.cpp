@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <fstream>
+#include <iostream>
 
 using namespace std;
 
@@ -21,14 +22,32 @@ int main()
 
 void beginSignalCatcher(int theSig)
 {
+    cout<<"tala\n";
+    fflush(stdout);
     // read range
-    // ifstream rangeFile ("range.txt");
-    // if(rangeFile.good()){
-        
+    ifstream rangeFile ("range.txt");
+    if(!rangeFile.good()){
+        cout<<"here1\n";
+        fflush(stdout);
+        exit(2);
+    }
+
+    string line;
+    if(!getline(rangeFile, line, ',')){
+        cout<<"here2\n";
+        fflush(stdout);
+        exit(3);
+    }
+
+    cout<<line<<"\n";
+
+    // stringstream sline (line);
+
+    // while(sline.good()){
+    //     string substr; 
+    //     getline
     // }
-    // else{
-    //     exit(2);
-    // }
+    
     // give a double
     // write double on file
 }
