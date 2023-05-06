@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <GL/glut.h>
 #include <math.h>
+#include <string.h>
 
 void drawCircle(float r, float x, float y)
 {
@@ -15,6 +16,20 @@ void drawCircle(float r, float x, float y)
 		glVertex2f(r * cos(M_PI * i / 180.0) + x, r * sin(M_PI * i / 180.0) + y);
 
 	glEnd();
+}
+
+void displayText(float x, float y){
+	// Set the color to white
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    // Set the text position
+    glRasterPos2f(-0.5f, 0.5f);
+
+    // Draw the text character by character
+    char* text = "Hello, world!";
+    for (int i = 0; i < strlen(text); i++) {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, text[i]);
+    }
 }
 
 void display()
@@ -55,7 +70,9 @@ void display()
 
 	// glEnd();
 
-	drawCircle(0.1f, 0.0f, 0.0f);
+	drawCircle(0.05f, 0.0f, 0.5f);
+	drawCircle(0.031f, 0.3f, 0.5f);
+	displayText(0,0);
 
 	// Flush drawing command buffer to make drawing happen as soon as possible.
 	glFlush();

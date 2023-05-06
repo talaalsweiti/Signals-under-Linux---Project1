@@ -15,8 +15,12 @@ unsigned children[5];
 
 void createProcesses(char*,int);
 void generateRange();
+void manageChildrenValues();
 void childDeadSignalCatcher(int);
+void childValueSignalCatcher(int);
 void cleanup();
+
+unsigned sigCount = 0;
 
 int main(int argc, char *argv[])
 {
@@ -51,18 +55,29 @@ int main(int argc, char *argv[])
     createProcesses("./coprocessor",4);
 
     sigset(SIGCHLD, childDeadSignalCatcher);
+    sigset(SIGUSR1, childValueSignalCatcher);
 
     srand((unsigned) getpid());
 
     sleep(2);
     for(unsigned int i=0; i<rounds; i++){
+        sigCount = 0;
         generateRange();
         
         for(int i=0; i<4; i++){
             kill(children[i], SIGUSR1);
         }
+
+        while(sigCount<4); // pause() function caused the process not to recieve all signals sent by children
+
+        cout<< "children finished writing\n";
+        fflush(stdout);
+
+        manageChildrenValues();
+           
         
-       sleep(5);
+
+       sleep(10);
     }
     
     cleanup();
@@ -112,18 +127,53 @@ void childDeadSignalCatcher(int theSig){
     cleanup();
     exit(theSig);
     
-}   
+}
+
+void childValueSignalCatcher(int theSig){
+    cout<< "A child finished writing\n";
+    fflush(stdout);
+    sigCount++;
+}
 
 
 void cleanup(){
+    sigset(SIGCHLD, SIG_DFL);
+
     for(auto child: children){
         kill(child, SIGKILL);
+    }
+
+    for(int i=0; i<4; i++){
+        string fileName = to_string(children[i]) + ".txt";
+        int result = unlink(fileName.c_str());
+        // if(!result){
+        //     // if was not successfull do sth
+        //     // if the program terminated before creating the file?
+        // }
     }
     exit(0);
 }
 
-/*
-double range = (max - min); 
-    double div = RAND_MAX / range;
-    return min + (rand() / div);
-*/
+void manageChildrenValues(){
+
+    string values;
+    for(int i=0; i<4; i++){
+        string fileName = to_string(children[i]) + ".txt";
+        ifstream childFile(fileName);
+        if (!childFile.good())
+        {
+            perror("Open child file");
+            exit(4);
+        }
+
+        string line;
+        getline(childFile, line);
+        values+=line;
+        if(i<3){
+            values+=",";
+        }
+    }
+    cout<<values<<"\n";
+
+    // send values to coprocessor via pipe
+}

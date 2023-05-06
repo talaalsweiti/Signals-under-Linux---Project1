@@ -7,31 +7,33 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <string>
 
-using namespace std;  
+using namespace std;
 
 void beginSignalCatcher(int);
 
 int main()
 {
-    cout<<"I am Child\n";
+    cout << "I am Child\n";
 
     if (sigset(SIGUSR1, beginSignalCatcher) == SIG_ERR)
     {
         perror("Sigset can not set SIGUSR1");
         exit(SIGUSR1);
     }
-    while(1);
+    while (1);
     return 0;
 }
 
-void beginSignalCatcher(int theSig)
+void beginSignalCatcher(int theSig) // generateValue
 {
-    cout<<"tala\n";
+    cout << "tala\n";
     fflush(stdout);
     // read range
-    ifstream rangeFile ("range.txt");
-    if(!rangeFile.good()){
+    ifstream rangeFile("range.txt");
+    if (!rangeFile.good())
+    {
         perror("Open range.txt");
         exit(2);
     }
@@ -43,22 +45,35 @@ void beginSignalCatcher(int theSig)
     vector<string> rangeValues;
     stringstream sline(line);
 
-    while(sline.good()){
+    while (sline.good())
+    {
         string substr;
         getline(sline, substr, ',');
         rangeValues.push_back(substr);
     }
-
-
-    cout<< getpid() << " min :" << rangeValues[0]<<"\n";
-
-    cout<< getpid() << " max :" << rangeValues[1]<<"\n";
-
-    // int minValue = atoi (sMi)
-    // double range = (atoi(max) - atoi(min)); 
-    // double div = RAND_MAX / range;
-    // double value =  min + (rand() / div);
+    // check for errors (empty line ...)
     
+    srand((unsigned) getpid());
+
+    int minValue = stoi(rangeValues[0]);
+    int maxValue = stoi(rangeValues[1]);
+    double range = (maxValue - minValue);
+    double div = RAND_MAX / range;
+    double value = minValue + (rand() / div);
+
+    ofstream generatedNumFile;
+    string fileName = to_string(getpid()) + ".txt";
+    generatedNumFile.open(fileName);
+
+    generatedNumFile << value;
+
+    generatedNumFile.close();
+
+    kill(getppid(), SIGUSR1);
+
+    // cout << to_string(getpid()) << "\n";
+
+
     // // give a double
     // // write double on file
 }
