@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
     srand((unsigned) getpid());
 
-
+    sleep(2);
     for(int i=0; i<rounds; i++){
         generateRange();
         
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
             kill(children[i], SIGUSR1);
         }
         
-        sleep(10);
+       sleep(5);
     }
     
     cleanup();

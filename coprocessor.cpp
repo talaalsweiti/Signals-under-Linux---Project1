@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int main(){
-    printf("%d \n", atoi(" 10aseel"));
+    printf("coprocessor\n");
+    while(1);
+    fflush(stdout);
     return 0;
 }
