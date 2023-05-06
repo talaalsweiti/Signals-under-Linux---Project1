@@ -5,8 +5,10 @@
 #include <sys/types.h>
 #include <fstream>
 #include <iostream>
+#include <vector>
+#include <sstream>
 
-using namespace std;
+using namespace std;  
 
 void beginSignalCatcher(int);
 
@@ -34,28 +36,29 @@ void beginSignalCatcher(int theSig)
         exit(2);
     }
 
-    
-    string sMinValue;
-    if(!getline(rangeFile, sMinValue, ',')){
-        perror("Reading range.txt");
-        exit(3);
+    string line;
+
+    getline(rangeFile, line);
+
+    vector<string> rangeValues;
+    stringstream sline(line);
+
+    while(sline.good()){
+        string substr;
+        getline(sline, substr, ',');
+        rangeValues.push_back(substr);
     }
 
-    // cout<< getpid() << " min :" << minValue<<"\n";
 
-    string sMaxValue;
-    if(!getline(rangeFile, sMaxValue, ',')){
-         perror("Reading range.txt")
-        exit(3);
-    }
+    cout<< getpid() << " min :" << rangeValues[0]<<"\n";
 
-    // cout<< getpid() << " max :" << maxValue<<"\n";
+    cout<< getpid() << " max :" << rangeValues[1]<<"\n";
 
-    int minValue = atoi (sMi)
-    double range = (atoi(max) - atoi(min)); 
-    double div = RAND_MAX / range;
-    double value =  min + (rand() / div);
+    // int minValue = atoi (sMi)
+    // double range = (atoi(max) - atoi(min)); 
+    // double div = RAND_MAX / range;
+    // double value =  min + (rand() / div);
     
-    // give a double
-    // write double on file
+    // // give a double
+    // // write double on file
 }

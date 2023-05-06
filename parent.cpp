@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     }
     if (argc == 2)
     {
-        for (int i = 0; i < strlen(argv[1]); i++)
+        for (unsigned int i = 0; i < strlen(argv[1]); i++)
         {
             if (!isdigit(argv[1][i]))
             {
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     srand((unsigned) getpid());
 
     sleep(2);
-    for(int i=0; i<rounds; i++){
+    for(unsigned int i=0; i<rounds; i++){
         generateRange();
         
         for(int i=0; i<4; i++){
@@ -112,7 +112,7 @@ void childDeadSignalCatcher(int theSig){
     cleanup();
     exit(theSig);
     
-}
+}   
 
 
 void cleanup(){
