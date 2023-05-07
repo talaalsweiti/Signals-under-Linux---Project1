@@ -22,6 +22,7 @@ void cleanup();
 
 unsigned sigCount = 0;
 
+
 int main(int argc, char *argv[])
 {
     unsigned rounds = 5;
@@ -47,15 +48,17 @@ int main(int argc, char *argv[])
             exit(3);
         }
     }
+    
+    sigset(SIGUSR1, childValueSignalCatcher);
+    sigset(SIGCHLD, childDeadSignalCatcher);
+
     for (int i = 0; i < 4; i++)
     {
         createProcesses("./child",i);
     }
     
     createProcesses("./coprocessor",4);
-
-    sigset(SIGCHLD, childDeadSignalCatcher);
-    sigset(SIGUSR1, childValueSignalCatcher);
+    
 
     srand((unsigned) getpid());
 
@@ -66,9 +69,12 @@ int main(int argc, char *argv[])
         
         for(int i=0; i<4; i++){
             kill(children[i], SIGUSR1);
+            sleep(1);
         }
 
-        while(sigCount<4); // pause() function caused the process not to recieve all signals sent by children
+        while(sigCount<4){
+            pause();  
+        }
 
         cout<< "children finished writing\n";
         fflush(stdout);
@@ -77,7 +83,7 @@ int main(int argc, char *argv[])
            
         
 
-       sleep(10);
+       sleep(1);
     }
     
     cleanup();
@@ -85,7 +91,7 @@ int main(int argc, char *argv[])
 }
 
 void createProcesses(char* file, int i)
-{
+{ 
     pid_t pid = fork();
     switch (pid)
     {
@@ -130,9 +136,9 @@ void childDeadSignalCatcher(int theSig){
 }
 
 void childValueSignalCatcher(int theSig){
-    cout<< "A child finished writing\n";
-    fflush(stdout);
     sigCount++;
+    cout<< "A child finished writing\n";
+    fflush(stdout);  
 }
 
 

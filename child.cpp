@@ -69,7 +69,10 @@ void beginSignalCatcher(int theSig) // generateValue
 
     generatedNumFile.close();
 
-    kill(getppid(), SIGUSR1);
+    cout<< "shahd\n";
+    fflush(stdout);
+
+    kill(getppid(), SIGUSR1); 
 
     // cout << to_string(getpid()) << "\n";
 
