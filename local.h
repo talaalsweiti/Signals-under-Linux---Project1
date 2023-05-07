@@ -15,8 +15,3 @@
 #define FIFO "/tmp/FIFO"
 #define B_SIZ (PIPE_BUF / 2)
 
-// struct message
-// {
-//     char fifo_name[B_SIZ];
-//     char cmd_line[B_SIZ];
-// };
