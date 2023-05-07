@@ -10,24 +10,10 @@ char* TEAM_1_SCORE = "0";
 char* TEAM_2_SCORE = "0";
 char* WINNER = "The Winner is TEAM 1";
 
-// function to reshape the window
-void reshape()
-{
-    // Set the viewport to match the aspect ratio of the window
-    int width = glutGet(GLUT_WINDOW_WIDTH);
-    int height = glutGet(GLUT_WINDOW_HEIGHT);
-    glViewport(0, 0, width, height);
 
-    // Calculate the aspect ratio of the window
-    float aspect_ratio = (float)width / (float)height;
-
-    // Set up the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
-
-    // Switch back to the modelview matrix for drawing
-    glMatrixMode(GL_MODELVIEW);
+void reshape(int width, int height) {
+    // Keep the viewport size fixed at 800x600 pixels
+    glViewport(0, 0, 1000, 1000);
 }
 
 void drawCircle(float r, float x, float y)
@@ -52,7 +38,7 @@ void displayText(char* text, float cx, float cy)
     int text_width = glutBitmapLength(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)text);
     int text_height = 24; // bitmap height for GLUT_BITMAP_TIMES_ROMAN_24
 
-    float x = cx - ((float)text_width /  (float)glutGet(GLUT_WINDOW_WIDTH));
+    float x = cx - ((float)text_width /  (float)1000);
     float y = cy - ((float)text_height / 2.0f / (float)glutGet(GLUT_WINDOW_HEIGHT));
 
     // Set the text position
@@ -87,6 +73,14 @@ void drawRound(){
 void drawParent(){
     drawCircle(0.1f, 0.0f, 0.4f);
     displayText("Parent", 0, 0.55f);
+}
+
+void drawRangeFile(){
+    drawRectangle(-0.75f, 0.4f, -0.69f, 0.47f); // TODO: Change color of the file
+    drawRectangle(-0.73f, 0.42f, -0.67f, 0.49f);
+    displayText("Range.txt", -0.71f, 0.34f);
+    displayText("Min: 1000000000", -0.71f, 0.24f);
+    displayText("Max: 10000000000", -0.71f, 0.14f);
 }
 
 void drawTeams(){
@@ -126,6 +120,8 @@ void redraw(){
     drawRound();
 
     drawParent();
+    
+    drawRangeFile();
 
     drawTeams();
  
@@ -139,7 +135,7 @@ void redraw(){
 
 void display()
 {
-    reshape();
+    // reshape();
 
     // Set every pixel in the frame buffer to the current clear color.
     glClear(GL_COLOR_BUFFER_BIT);
@@ -147,6 +143,8 @@ void display()
     drawRound();
 
     drawParent();
+
+    drawRangeFile();
 
     drawTeams();
  
@@ -178,6 +176,8 @@ int main(int argc, char **argv)
 
     // call this whenever window needs redrawing
     glutDisplayFunc(display);
+
+    glutReshapeFunc(reshape);
 
     // Start the main loop.  glutMainLoop never returns.
     glutMainLoop();
