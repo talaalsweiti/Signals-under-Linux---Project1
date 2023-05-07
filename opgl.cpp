@@ -2,8 +2,13 @@
 #include <stdio.h>
 #include <GL/glut.h>
 #include <math.h>
-#include <string.h>
 #include <string>
+#include <string.h>
+
+char* ROUND = "Round #1";
+char* TEAM_1_SCORE = "0";
+char* TEAM_2_SCORE = "0";
+char* WINNER = "The Winner is TEAM 1";
 
 // function to reshape the window
 void reshape()
@@ -53,12 +58,14 @@ void displayText(char* text, float cx, float cy)
     // Set the text position
     glRasterPos2f(x, y);
 
+
     // Draw the text character by character
     for (int i = 0; i < strlen(text); i++)
     {
         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
     }
 }
+
 
 void drawRectangle(float x1, float y1, float x2, float y2) {
     
@@ -74,7 +81,7 @@ void drawRectangle(float x1, float y1, float x2, float y2) {
 
 void drawRound(){
     drawRectangle(-0.2f, 0.8f, 0.2f, 1.0f);
-    displayText("Round #1", 0.0f, 0.9f);
+    displayText(ROUND, 0.0f, 0.9f);
 }
 
 void drawParent(){
@@ -103,14 +110,32 @@ void drawCoprocessor(){
 
 void drawScores(){
     displayText("Score:", -0.9f, -0.5f);
-    displayText("0", -0.5f, -0.5f);
-    displayText("0", 0.5f, -0.5f);
+    displayText(TEAM_1_SCORE, -0.5f, -0.5f);
+    displayText(TEAM_2_SCORE, 0.5f, -0.5f);
 }
 
 void drawWinner(){
     drawRectangle(-0.3f, -1.0f, 0.3f, -0.8f);
-    displayText("The Winner is TEAM 1", 0.0f, -0.9f);
+    displayText(WINNER, 0.0f, -0.9f);
 }
+
+void redraw(){
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    drawRound();
+
+    drawParent();
+
+    drawTeams();
+ 
+    drawCoprocessor();
+    
+    drawScores();
+
+    drawWinner();
+}
+
 
 void display()
 {
@@ -130,6 +155,7 @@ void display()
     drawScores();
 
     drawWinner();
+
 
     // Flush drawing command buffer to make drawing happen asap.
     glFlush();
