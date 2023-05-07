@@ -11,42 +11,74 @@
 #include <iostream>
 #include <fcntl.h>
 #include <limits.h>
-int fifo;
+#include <sstream>
 
-int f_des[2];
-static char message[BUFSIZ];
+#define FIFO "/tmp/FIFO"
 
 using namespace std;
+int fifo;
+char buffer[BUFSIZ];
 
-int main(int argc, char *argv[])
+int main()
 {
-    sleep(3);
-    f_des[0] = atoi(argv[1]);
-    f_des[1] = atoi(argv[2]);
 
-    printf("Im coprocessor\n");
-    fflush(stdout);
-
-    // close(f_des[1]);
-    if (read(f_des[0], message, BUFSIZ) == -1)
-    {
-        perror("Read");
-        exit(4);
-    }
-    printf("Message received by child: [%s]\n", message);
-    fflush(stdout);
-
-    sleep(1);
-
-    if (write(f_des[1], message, strlen(message) == -1))
-    {
-        perror("Write");
-        exit(5);
-    }
-    // close(f_des[0]);
-
+    // if ((fifo = open(FIFO, O_RDWR)) == -1)
+    // {
+    //     perror(FIFO);
+    //     exit(7);
+    // }
+    printf("coprocessor\n");
     while (1)
-        ;
+    {
+        double values[4];
+        double teamSum[2];
 
+        if ((fifo = open(FIFO, O_RDONLY)) == -1)
+        {
+            perror(FIFO);
+            exit(7);
+        }
+
+        // memset(buffer, 0x0, BUFSIZ); 
+        read(fifo, buffer, sizeof(buffer));
+
+        close(fifo);
+
+        stringstream messageStream(buffer);
+
+        int i = 0;
+        while (messageStream.good() && i < 4)
+        {
+            string substr;
+            getline(messageStream, substr, ',');
+            values[i++] = stod(substr);
+            // cout << values[i - 1] << "\n";
+            // fflush(stdout);
+        }
+
+        for (i = 0; i < 2; i++)
+        {
+            teamSum[i] = values[i << 1] + values[(i << 1) + 1];
+        }
+        string teamsResult = to_string(teamSum[0]) + "," + to_string(teamSum[1]);
+
+        cout << "Coprocessor:: team1 sum: " << teamSum[0] << "\n";
+        cout << "Coprocessor:: team2 sum: " << teamSum[1] << "\n";
+        fflush(stdout);
+
+
+        if ((fifo = open(FIFO, O_WRONLY)) == -1)
+        {
+            perror(FIFO);
+            exit(7);
+        }
+
+        write(fifo, teamsResult.c_str(), teamsResult.length() + 1);
+
+        close(fifo);
+        // while (1)
+        //     ;
+    }
+    close(fifo);
     return 0;
 }

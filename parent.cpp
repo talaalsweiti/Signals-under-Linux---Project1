@@ -11,26 +11,26 @@
 #include <iostream>
 #include <fcntl.h>
 #include <limits.h>
+#include <sstream>
 
 #define FIFO "/tmp/FIFO"
-#define B_SIZ (PIPE_BUF / 2)
-using namespace std;
-unsigned children[5];
 
-void createProcesses(int);
+using namespace std;
+
+void createProcesses(char *, int);
 void generateRange();
 string manageChildrenValues();
 void childDeadSignalCatcher(int);
 void childValueSignalCatcher(int);
 void cleanup();
-void sendValuesToCoprocessor(string);
-void createCoProcessor();
+int processValues(string);
+
+char buffer[1024];
+using namespace std;
+unsigned children[5];
+unsigned teamsScore[2];
 
 unsigned sigCount = 0;
-
-int f_des[2];
-
-static char message[BUFSIZ];
 
 int main(int argc, char *argv[])
 {
@@ -60,16 +60,33 @@ int main(int argc, char *argv[])
 
     sigset(SIGUSR1, childValueSignalCatcher);
     sigset(SIGCHLD, childDeadSignalCatcher);
+    sigset(SIGINT, childDeadSignalCatcher);
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 4; i++)
     {
-        createProcesses(i);
+        createProcesses("./child", i);
     }
+
+    if ((mknod(FIFO, S_IFIFO | 0666, 0)) == -1)
+    {
+
+        if (unlink(FIFO))
+        {
+            perror("Error Deleting FIFO");
+            exit(4);
+        }
+        if ((mknod(FIFO, S_IFIFO | 0666, 0)) == -1)
+        {
+            perror("Error Creating FIFO");
+            exit(5);
+        }
+    }
+    createProcesses("./coprocessor", 4);
 
     srand((unsigned)getpid());
 
     sleep(2);
-    for (unsigned int i = 0; i < rounds; i++)
+    for (unsigned int r = 0; r < rounds; r++)
     {
         sigCount = 0;
         generateRange();
@@ -90,65 +107,30 @@ int main(int argc, char *argv[])
 
         string values = manageChildrenValues();
 
-        sleep(1);
-        // close(f_des[0]);
+        int winner = processValues(values);
+        printf("the winner team for round %d is team %d\n\n\n", r + 1, winner + 1);
 
-        if (write(f_des[1], values.c_str(), strlen(values.c_str())) == -1)
-        {
-            perror("Write");
-            exit(5);
-        }
-
-        sleep(1);
-
-        if (read(f_des[0], message, BUFSIZ) == -1)
-        {
-            perror("Read");
-            exit(4);
-        }
-        printf("Message received by parent: [%s]\n", message);
-        fflush(stdout);
-        // close(f_des[1]);
+        sleep(2);
     }
+    int winner = teamsScore[0] > teamsScore[1] ? 0 : 1;
+    printf("the overall winner team is team %d\n", winner + 1);
 
     cleanup();
 }
 
-void createProcesses(int i)
+void createProcesses(char *file, int i)
 {
-    if (i == 4)
-    {
-        if (pipe(f_des) == -1)
-        {
-            perror("Pipe");
-            exit(8);
-        }
-    }
     pid_t pid = fork();
     switch (pid)
     {
     case -1:
         perror("Fork");
-        exit(4);
+        exit(6);
 
     case 0: /* In the child */
-        if (i == 4)
-        {
-            char arg1[16];
-            char arg2[16];
-            sprintf(arg1, "%d", f_des[0]);
-            sprintf(arg2, "%d", f_des[1]);
-
-            execlp("./coprocessor", "./coprocessor", arg1, arg2, (char *)NULL);
-            perror("exec failure ");
-            exit(-2);
-        }
-        else
-        {
-            execlp("./child", "./child", (char *)NULL);
-            perror("exec failure ");
-            exit(-2);
-        }
+        execlp(file, file, (char *)NULL);
+        perror("exec failure ");
+        exit(7);
         break;
 
     default: /* In the parent */
@@ -170,6 +152,7 @@ void generateRange()
     }
 
     rangeFile << minValue << "," << maxValue;
+    cout << "Parent:: Range: " << minValue << "," << maxValue << "\n";
 
     rangeFile.close();
 }
@@ -184,8 +167,8 @@ void childDeadSignalCatcher(int theSig)
 void childValueSignalCatcher(int theSig)
 {
     sigCount++;
-    cout << "A child finished writing\n";
-    fflush(stdout);
+    // cout << "A child finished writing\n";
+    // fflush(stdout);
 }
 
 void cleanup()
@@ -222,7 +205,7 @@ string manageChildrenValues()
         if (!childFile.good())
         {
             perror("Open child file");
-            exit(4);
+            exit(8);
         }
 
         string line;
@@ -233,11 +216,61 @@ string manageChildrenValues()
             values += ",";
         }
     }
-    cout << values << "\n";
+    // cout << values << "\n";
     return values;
     // send values to coprocessor via pipe
 }
 
-void sendValuesToCoprocessor(string values)
+int processValues(string values)
 {
+    int fifo;
+    // if (!(fifo = open(FIFO, O_RDWR)))
+    if (!(fifo = open(FIFO, O_WRONLY)))
+    {
+        perror(FIFO);
+        exit(7);
+    }
+
+    write(fifo, values.c_str(), values.length() + 1);
+    cout << "Parent:: values: " << values << "\n";
+
+    close(fifo);
+
+    if (!(fifo = open(FIFO, O_RDONLY)))
+    {
+        perror(FIFO);
+        exit(7);
+    }
+    // memset(buffer, 0x0, BUFSIZ);//?
+    read(fifo, buffer, sizeof(buffer));
+    cout << "Parent recieved sums: " << buffer << "\n";
+
+    close(fifo);
+
+    stringstream messageStream(buffer);
+
+    int i = 0;
+    double teamsValues[2];
+    while (messageStream.good() && i < 2)
+    {
+        string substr;
+        getline(messageStream, substr, ',');
+        teamsValues[i++] = stod(substr);
+    }
+
+    cout << "Parent:: team1 sum: " << teamsValues[0] << "\n";
+    cout << "Parent:: team2 sum: " << teamsValues[1] << "\n";
+    fflush(stdout);
+
+    sleep(2);
+    if (teamsValues[1] > teamsValues[0])
+    {
+        teamsScore[1]++;
+        return 1;
+    }
+    else
+    {
+        teamsScore[0]++;
+        return 0;
+    }
 }

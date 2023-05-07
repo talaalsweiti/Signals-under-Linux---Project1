@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -g -Wall -std=c++11
 
-all: parent child coprocessor openglTest
+all: parent child coprocessor openglTest opgl
 
 parent: parent.cpp
 	$(CC) $(CFLAGS) parent.cpp -o parent
@@ -14,4 +14,6 @@ coprocessor: coprocessor.cpp
 
 openglTest: openglTest.cpp
 	g++ openglTest.cpp -o openglTest -lglut -lGLU -lGL
+opgl: opgl.cpp
+	g++ opgl.cpp -o opgl -lglut -lGLU -lGL
 

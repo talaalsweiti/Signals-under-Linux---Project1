@@ -22,15 +22,14 @@ int main()
         perror("Sigset can not set SIGUSR1");
         exit(SIGUSR1);
     }
-    while (1)
-        ;
+    while (1);
     return 0;
 }
 
 void beginSignalCatcher(int theSig) // generateValue
 {
-    cout << "tala\n";
-    fflush(stdout);
+    // cout << "tala\n";
+    // fflush(stdout);
     // read range
     ifstream rangeFile("/tmp/range.txt");
     if (!rangeFile.good())
@@ -53,8 +52,8 @@ void beginSignalCatcher(int theSig) // generateValue
         rangeValues.push_back(substr);
     }
     // check for errors (empty line ...)
-
-    srand((unsigned)getpid());
+    
+    srand((unsigned) getpid());
 
     int minValue = stoi(rangeValues[0]);
     int maxValue = stoi(rangeValues[1]);
@@ -70,12 +69,13 @@ void beginSignalCatcher(int theSig) // generateValue
 
     generatedNumFile.close();
 
-    cout << "shahd\n";
-    fflush(stdout);
+    // cout<< "shahd\n";
+    // fflush(stdout);
 
-    kill(getppid(), SIGUSR1);
+    kill(getppid(), SIGUSR1); 
 
     // cout << to_string(getpid()) << "\n";
+
 
     // // give a double
     // // write double on file
