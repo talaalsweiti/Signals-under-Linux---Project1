@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     printf("Im coprocessor\n");
     fflush(stdout);
 
-    // close(f_des[1]);
+    close(f_des[1]);
     if (read(f_des[0], message, BUFSIZ) == -1)
     {
         perror("Read");
@@ -35,6 +35,16 @@ int main(int argc, char *argv[])
     }
     printf("Message received by child: [%s]\n", message);
     fflush(stdout);
+
+    sleep(1);
+
+    if (write(f_des[1], message, strlen(message) == -1))
+    {
+        perror("Write");
+        exit(5);
+    }
+    close(f_des[0]);
+
     while (1)
         ;
 

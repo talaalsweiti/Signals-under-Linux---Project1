@@ -92,7 +92,8 @@ int main(int argc, char *argv[])
 
         string values = manageChildrenValues();
 
-        sleep(5);
+        sleep(1);
+        close(f_des[0]);
 
         if (write(f_des[1], values.c_str(), strlen(values.c_str())) == -1)
         {
@@ -100,7 +101,16 @@ int main(int argc, char *argv[])
             exit(5);
         }
 
-        sleep(5);
+        sleep(1);
+
+        if (read(f_des[0], message, BUFSIZ) == -1)
+        {
+            perror("Read");
+            exit(4);
+        }
+        printf("Message received by parent: [%s]\n", message);
+        fflush(stdout);
+        close(f_des[1]);
     }
 
     cleanup();
