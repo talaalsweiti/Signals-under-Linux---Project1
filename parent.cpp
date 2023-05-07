@@ -1,19 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <ctype.h>
-#include <string>
-#include <string.h>
-#include <fstream>
-#include <iostream>
-#include <fcntl.h>
-#include <limits.h>
-#include <sstream>
-
-#define FIFO "/tmp/FIFO"
+#include "local.h"
 
 using namespace std;
 
@@ -25,11 +10,13 @@ void childValueSignalCatcher(int);
 void cleanup();
 int processValues(string);
 
+/*
+WHY NOT USING BUFSIZE???
+*/
 char buffer[1024];
 using namespace std;
-unsigned children[5];
-unsigned teamsScore[2];
-
+unsigned children[NUM_OF_CHILDREN];
+unsigned teamsScore[NUM_OF_TEAMS];
 unsigned sigCount = 0;
 
 int main(int argc, char *argv[])
@@ -62,7 +49,7 @@ int main(int argc, char *argv[])
     sigset(SIGCHLD, childDeadSignalCatcher);
     sigset(SIGINT, childDeadSignalCatcher);
 
-    for (int i = 0; i < 4; i++)
+    for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
     {
         createProcesses("./child", i);
     }
@@ -91,13 +78,13 @@ int main(int argc, char *argv[])
         sigCount = 0;
         generateRange();
 
-        for (int i = 0; i < 4; i++)
+        for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
         {
             kill(children[i], SIGUSR1);
             sleep(1);
         }
 
-        while (sigCount < 4)
+        while (sigCount < NUM_OF_CHILDREN-1)
         {
             pause();
         }
@@ -108,7 +95,7 @@ int main(int argc, char *argv[])
         string values = manageChildrenValues();
 
         int winner = processValues(values);
-        printf("the winner team for round %d is team %d\n\n\n", r + 1, winner + 1);
+        printf("The winner team for round %d is team %d\n\n\n", r + 1, winner + 1);
 
         sleep(2);
     }
@@ -167,8 +154,6 @@ void childDeadSignalCatcher(int theSig)
 void childValueSignalCatcher(int theSig)
 {
     sigCount++;
-    // cout << "A child finished writing\n";
-    // fflush(stdout);
 }
 
 void cleanup()
@@ -180,7 +165,7 @@ void cleanup()
         kill(child, SIGKILL);
     }
 
-    for (int i = 0; i < 4; i++)
+    for (unsigned int i = 0; i < NUM_OF_CHILDREN-1; i++)
     {
         string fileName = "/tmp/" + to_string(children[i]) + ".txt";
         int result = unlink(fileName.c_str());
@@ -198,7 +183,7 @@ string manageChildrenValues()
 {
 
     string values;
-    for (int i = 0; i < 4; i++)
+    for (unsigned int i = 0; i < NUM_OF_CHILDREN-1; i++)
     {
         string fileName = "/tmp/" + to_string(children[i]) + ".txt";
         ifstream childFile(fileName);
@@ -249,8 +234,11 @@ int processValues(string values)
 
     stringstream messageStream(buffer);
 
-    int i = 0;
-    double teamsValues[2];
+    unsigned int i = 0;
+    double teamsValues[NUM_OF_TEAMS];
+    /*
+    is i< 2 for the number of teams
+    */
     while (messageStream.good() && i < 2)
     {
         string substr;

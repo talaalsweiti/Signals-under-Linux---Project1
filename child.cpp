@@ -1,13 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <fstream>
-#include <iostream>
-#include <vector>
-#include <sstream>
-#include <string>
+#include "local.h"
 
 using namespace std;
 
@@ -22,14 +13,14 @@ int main()
         perror("Sigset can not set SIGUSR1");
         exit(SIGUSR1);
     }
-    while (1);
+    while (1)
+        ;
     return 0;
 }
 
 void beginSignalCatcher(int theSig) // generateValue
 {
-    // cout << "tala\n";
-    // fflush(stdout);
+
     // read range
     ifstream rangeFile("/tmp/range.txt");
     if (!rangeFile.good())
@@ -42,18 +33,19 @@ void beginSignalCatcher(int theSig) // generateValue
 
     getline(rangeFile, line);
 
-    vector<string> rangeValues;
+    vector<string> rangeValues(2);
+    unsigned int i = 0;
     stringstream sline(line);
 
     while (sline.good())
     {
         string substr;
         getline(sline, substr, ',');
-        rangeValues.push_back(substr);
+        rangeValues[i++] = substr;
     }
     // check for errors (empty line ...)
-    
-    srand((unsigned) getpid());
+
+    srand((unsigned)getpid());
 
     int minValue = stoi(rangeValues[0]);
     int maxValue = stoi(rangeValues[1]);
@@ -68,14 +60,10 @@ void beginSignalCatcher(int theSig) // generateValue
     generatedNumFile << value;
 
     generatedNumFile.close();
+ 
 
-    // cout<< "shahd\n";
-    // fflush(stdout);
-
-    kill(getppid(), SIGUSR1); 
-
-    // cout << to_string(getpid()) << "\n";
-
+    kill(getppid(), SIGUSR1);
+  
 
     // // give a double
     // // write double on file

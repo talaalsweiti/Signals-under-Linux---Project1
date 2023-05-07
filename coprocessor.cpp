@@ -1,19 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <ctype.h>
-#include <string>
-#include <string.h>
-#include <fstream>
-#include <iostream>
-#include <fcntl.h>
-#include <limits.h>
-#include <sstream>
-
-#define FIFO "/tmp/FIFO"
+#include "local.h"
 
 using namespace std;
 int fifo;
@@ -30,8 +15,8 @@ int main()
     printf("coprocessor\n");
     while (1)
     {
-        double values[4];
-        double teamSum[2];
+        double values[NUM_OF_CHILDREN-1];
+        double teamSum[NUM_OF_TEAMS];
 
         if ((fifo = open(FIFO, O_RDONLY)) == -1)
         {
@@ -46,17 +31,15 @@ int main()
 
         stringstream messageStream(buffer);
 
-        int i = 0;
-        while (messageStream.good() && i < 4)
+        unsigned int i = 0;
+        while (messageStream.good() && i < NUM_OF_CHILDREN-1)
         {
             string substr;
             getline(messageStream, substr, ',');
             values[i++] = stod(substr);
-            // cout << values[i - 1] << "\n";
-            // fflush(stdout);
         }
 
-        for (i = 0; i < 2; i++)
+        for (i = 0; i < NUM_OF_TEAMS; i++)
         {
             teamSum[i] = values[i << 1] + values[(i << 1) + 1];
         }
