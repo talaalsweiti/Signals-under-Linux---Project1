@@ -1,27 +1,20 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <string>
-#include <string.h>
-#include <fstream>
-#include <iostream>
+#include <local.h>
 
 using namespace std;
 unsigned children[5];
 
-
-void createProcesses(char*,int);
+void createProcesses(char *, int);
 void generateRange();
-void manageChildrenValues();
+string manageChildrenValues();
 void childDeadSignalCatcher(int);
 void childValueSignalCatcher(int);
 void cleanup();
+void sendValuesToCoprocessor(string);
 
 unsigned sigCount = 0;
 
+int f_des[2];
+static char message[BUFSIZ];
 
 int main(int argc, char *argv[])
 {
@@ -48,50 +41,56 @@ int main(int argc, char *argv[])
             exit(3);
         }
     }
-    
+
     sigset(SIGUSR1, childValueSignalCatcher);
     sigset(SIGCHLD, childDeadSignalCatcher);
 
     for (int i = 0; i < 4; i++)
     {
-        createProcesses("./child",i);
+        createProcesses("./child", i);
     }
-    
-    createProcesses("./coprocessor",4);
-    
 
-    srand((unsigned) getpid());
+    if (pipe(f_des) == -1)
+    {
+        perror("Pipe");
+        exit(2);
+    }
+
+    createProcesses("./coprocessor", 4);
+
+    srand((unsigned)getpid());
 
     sleep(2);
-    for(unsigned int i=0; i<rounds; i++){
+    for (unsigned int i = 0; i < rounds; i++)
+    {
         sigCount = 0;
         generateRange();
-        
-        for(int i=0; i<4; i++){
+
+        for (int i = 0; i < 4; i++)
+        {
             kill(children[i], SIGUSR1);
             sleep(1);
         }
 
-        while(sigCount<4){
-            pause();  
+        while (sigCount < 4)
+        {
+            pause();
         }
 
-        cout<< "children finished writing\n";
+        cout << "children finished writing\n";
         fflush(stdout);
 
-        manageChildrenValues();
-           
-        
+        string values = manageChildrenValues();
+        sendValuesToCoprocessor(values);
 
-       sleep(1);
+        sleep(1);
     }
-    
+
     cleanup();
- 
 }
 
-void createProcesses(char* file, int i)
-{ 
+void createProcesses(char *file, int i)
+{
     pid_t pid = fork();
     switch (pid)
     {
@@ -110,15 +109,16 @@ void createProcesses(char* file, int i)
     }
 }
 
-
-void generateRange(){
+void generateRange()
+{
     ofstream rangeFile;
-    rangeFile.open("range.txt");
+    rangeFile.open("/tmp/range.txt");
 
     int minValue = rand();
     int maxValue = rand();
-    
-    if(minValue > maxValue){
+
+    if (minValue > maxValue)
+    {
         swap(minValue, maxValue);
     }
 
@@ -127,44 +127,50 @@ void generateRange(){
     rangeFile.close();
 }
 
-
-void childDeadSignalCatcher(int theSig){
+void childDeadSignalCatcher(int theSig)
+{
     cout << "A child failed\n";
     cleanup();
     exit(theSig);
-    
 }
 
-void childValueSignalCatcher(int theSig){
+void childValueSignalCatcher(int theSig)
+{
     sigCount++;
-    cout<< "A child finished writing\n";
-    fflush(stdout);  
+    cout << "A child finished writing\n";
+    fflush(stdout);
 }
 
-
-void cleanup(){
+void cleanup()
+{
     sigset(SIGCHLD, SIG_DFL);
 
-    for(auto child: children){
+    for (auto child : children)
+    {
         kill(child, SIGKILL);
     }
 
-    for(int i=0; i<4; i++){
-        string fileName = to_string(children[i]) + ".txt";
+    for (int i = 0; i < 4; i++)
+    {
+        string fileName = "/tmp/" + to_string(children[i]) + ".txt";
         int result = unlink(fileName.c_str());
         // if(!result){
         //     // if was not successfull do sth
         //     // if the program terminated before creating the file?
         // }
     }
+    string fileName = "/tmp/range.txt";
+    int result = unlink(fileName.c_str());
     exit(0);
 }
 
-void manageChildrenValues(){
+string manageChildrenValues()
+{
 
     string values;
-    for(int i=0; i<4; i++){
-        string fileName = to_string(children[i]) + ".txt";
+    for (int i = 0; i < 4; i++)
+    {
+        string fileName = "/tmp/" + to_string(children[i]) + ".txt";
         ifstream childFile(fileName);
         if (!childFile.good())
         {
@@ -174,12 +180,17 @@ void manageChildrenValues(){
 
         string line;
         getline(childFile, line);
-        values+=line;
-        if(i<3){
-            values+=",";
+        values += line;
+        if (i < 3)
+        {
+            values += ",";
         }
     }
-    cout<<values<<"\n";
-
+    cout << values << "\n";
+    return values;
     // send values to coprocessor via pipe
+}
+
+void sendValuesToCoprocessor(string values)
+{
 }
