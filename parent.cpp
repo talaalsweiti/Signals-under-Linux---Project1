@@ -1,19 +1,35 @@
-#include <local.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <ctype.h>
+#include <string>
+#include <string.h>
+#include <fstream>
+#include <iostream>
+#include <fcntl.h>
+#include <limits.h>
 
+#define FIFO "/tmp/FIFO"
+#define B_SIZ (PIPE_BUF / 2)
 using namespace std;
 unsigned children[5];
 
-void createProcesses(char *, int);
+void createProcesses(int);
 void generateRange();
 string manageChildrenValues();
 void childDeadSignalCatcher(int);
 void childValueSignalCatcher(int);
 void cleanup();
 void sendValuesToCoprocessor(string);
+void createCoProcessor();
 
 unsigned sigCount = 0;
 
 int f_des[2];
+
 static char message[BUFSIZ];
 
 int main(int argc, char *argv[])
@@ -45,18 +61,10 @@ int main(int argc, char *argv[])
     sigset(SIGUSR1, childValueSignalCatcher);
     sigset(SIGCHLD, childDeadSignalCatcher);
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
     {
-        createProcesses("./child", i);
+        createProcesses(i);
     }
-
-    if (pipe(f_des) == -1)
-    {
-        perror("Pipe");
-        exit(2);
-    }
-
-    createProcesses("./coprocessor", 4);
 
     srand((unsigned)getpid());
 
@@ -81,16 +89,41 @@ int main(int argc, char *argv[])
         fflush(stdout);
 
         string values = manageChildrenValues();
-        sendValuesToCoprocessor(values);
 
         sleep(1);
+        // close(f_des[0]);
+
+        if (write(f_des[1], values.c_str(), strlen(values.c_str())) == -1)
+        {
+            perror("Write");
+            exit(5);
+        }
+
+        sleep(1);
+
+        if (read(f_des[0], message, BUFSIZ) == -1)
+        {
+            perror("Read");
+            exit(4);
+        }
+        printf("Message received by parent: [%s]\n", message);
+        fflush(stdout);
+        // close(f_des[1]);
     }
 
     cleanup();
 }
 
-void createProcesses(char *file, int i)
+void createProcesses(int i)
 {
+    if (i == 4)
+    {
+        if (pipe(f_des) == -1)
+        {
+            perror("Pipe");
+            exit(8);
+        }
+    }
     pid_t pid = fork();
     switch (pid)
     {
@@ -99,9 +132,23 @@ void createProcesses(char *file, int i)
         exit(4);
 
     case 0: /* In the child */
-        execlp(file, file, (char *)NULL);
-        perror("exec failure ");
-        exit(-2);
+        if (i == 4)
+        {
+            char arg1[16];
+            char arg2[16];
+            sprintf(arg1, "%d", f_des[0]);
+            sprintf(arg2, "%d", f_des[1]);
+
+            execlp("./coprocessor", "./coprocessor", arg1, arg2, (char *)NULL);
+            perror("exec failure ");
+            exit(-2);
+        }
+        else
+        {
+            execlp("./child", "./child", (char *)NULL);
+            perror("exec failure ");
+            exit(-2);
+        }
         break;
 
     default: /* In the parent */
