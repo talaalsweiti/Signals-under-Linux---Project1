@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     printf("Im coprocessor\n");
     fflush(stdout);
 
-    close(f_des[1]);
+    // close(f_des[1]);
     if (read(f_des[0], message, BUFSIZ) == -1)
     {
         perror("Read");
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         perror("Write");
         exit(5);
     }
-    close(f_des[0]);
+    // close(f_des[0]);
 
     while (1)
         ;

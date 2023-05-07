@@ -61,12 +61,10 @@ int main(int argc, char *argv[])
     sigset(SIGUSR1, childValueSignalCatcher);
     sigset(SIGCHLD, childDeadSignalCatcher);
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
     {
         createProcesses(i);
     }
-    sleep(5);
-    createCoProcessor();
 
     srand((unsigned)getpid());
 
@@ -93,7 +91,7 @@ int main(int argc, char *argv[])
         string values = manageChildrenValues();
 
         sleep(1);
-        close(f_des[0]);
+        // close(f_des[0]);
 
         if (write(f_des[1], values.c_str(), strlen(values.c_str())) == -1)
         {
@@ -110,7 +108,7 @@ int main(int argc, char *argv[])
         }
         printf("Message received by parent: [%s]\n", message);
         fflush(stdout);
-        close(f_des[1]);
+        // close(f_des[1]);
     }
 
     cleanup();
@@ -118,6 +116,14 @@ int main(int argc, char *argv[])
 
 void createProcesses(int i)
 {
+    if (i == 4)
+    {
+        if (pipe(f_des) == -1)
+        {
+            perror("Pipe");
+            exit(8);
+        }
+    }
     pid_t pid = fork();
     switch (pid)
     {
@@ -126,9 +132,23 @@ void createProcesses(int i)
         exit(4);
 
     case 0: /* In the child */
-        execlp("./child", "./child", (char *)NULL);
-        perror("exec failure ");
-        exit(-2);
+        if (i == 4)
+        {
+            char arg1[16];
+            char arg2[16];
+            sprintf(arg1, "%d", f_des[0]);
+            sprintf(arg2, "%d", f_des[1]);
+
+            execlp("./coprocessor", "./coprocessor", arg1, arg2, (char *)NULL);
+            perror("exec failure ");
+            exit(-2);
+        }
+        else
+        {
+            execlp("./child", "./child", (char *)NULL);
+            perror("exec failure ");
+            exit(-2);
+        }
         break;
 
     default: /* In the parent */
@@ -218,34 +238,6 @@ string manageChildrenValues()
     // send values to coprocessor via pipe
 }
 
-void createCoProcessor()
-{
-    if (pipe(f_des) == -1)
-    {
-        perror("Pipe");
-        exit(8);
-    }
-    pid_t pid = fork();
-    switch (pid)
-    {
-    case -1:
-        perror("Fork");
-        exit(4);
-
-    case 0: /* In the child */
-        char arg1[16];
-        char arg2[16];
-        sprintf(arg1, "%d", f_des[0]);
-        sprintf(arg2, "%d", f_des[1]);
-
-        execlp("./coprocessor", "./coprocessor", arg1, arg2, (char *)NULL);
-        perror("exec failure ");
-        exit(-2);
-
-    default:
-        children[4] = pid;
-    }
-}
 void sendValuesToCoprocessor(string values)
 {
 }
