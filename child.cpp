@@ -31,7 +31,7 @@ void beginSignalCatcher(int theSig) // generateValue
     cout << "tala\n";
     fflush(stdout);
     // read range
-    ifstream rangeFile("range.txt");
+    ifstream rangeFile("/tmp/range.txt");
     if (!rangeFile.good())
     {
         perror("Open range.txt");
@@ -62,7 +62,7 @@ void beginSignalCatcher(int theSig) // generateValue
     double value = minValue + (rand() / div);
 
     ofstream generatedNumFile;
-    string fileName = to_string(getpid()) + ".txt";
+    string fileName = "/tmp/" + to_string(getpid()) + ".txt";
     generatedNumFile.open(fileName);
 
     generatedNumFile << value;
