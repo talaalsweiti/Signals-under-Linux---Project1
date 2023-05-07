@@ -60,29 +60,57 @@ void displayText(char* text, float cx, float cy)
     }
 }
 
-// void displayText2(char* text, float cx, float cy)
-// {
-//     // Set the color to white
-//     glColor3f(1.0f, 1.0f, 1.0f);
-
-//     int text_width = glutBitmapLength(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)text.c_str());
-//     int text_height = 24; // bitmap height for GLUT_BITMAP_TIMES_ROMAN_24
-
-//     float x = cx - ((float)text_width /  (float)glutGet(GLUT_WINDOW_WIDTH));
-//     float y = cy - ((float)text_height / 2.0f / (float)glutGet(GLUT_WINDOW_HEIGHT));
-
-//     // Set the text position
-//     glRasterPos2f(x, y);
-
-//     // Draw the text character by character
-//     for (int i = 0; i < text.length(); i++)
-//     {
-//         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
-//     }
+void drawRectangle(float x1, float y1, float x2, float y2) {
     
-//     currentText = text; // store current text for redrawing
-//     glutPostRedisplay(); // mark window as needing to be redrawn
-// }
+    glBegin(GL_QUADS); // draw a quad
+        glColor3f(0.0f, 0.0f, 1.0f); 
+        // -0.2f, -1.0f, 0.2f, -1.0f
+        glVertex2f(x1, y1); // bottom left corner
+        glVertex2f(x2, y1); // bottom right corner
+        glVertex2f(x2, y2); // top right corner
+        glVertex2f(x1, y2); // top left corner
+    glEnd();
+}
+
+void drawRound(){
+    drawRectangle(-0.2f, 0.8f, 0.2f, 1.0f);
+    displayText("Round #1", 0.0f, 0.9f);
+}
+
+void drawParent(){
+    drawCircle(0.1f, 0.0f, 0.4f);
+    displayText("Parent", 0, 0.55f);
+}
+
+void drawTeams(){
+    drawCircle(0.05f, -0.7f, -0.2f);
+    displayText("1", -0.7f, -0.3f);
+    drawCircle(0.05f, -0.3f, -0.2f);
+    displayText("2", -0.3f, -0.3f);
+    displayText("Team 1", -0.5f, -0.4f);
+
+    drawCircle(0.05f, 0.3f, -0.2f);
+    displayText("3", 0.3f, -0.3f);
+    drawCircle(0.05f, 0.7f, -0.2f);
+    displayText("4", 0.7f, -0.3f);
+    displayText("Team 2", 0.5f, -0.4f);
+}
+
+void drawCoprocessor(){
+    drawCircle(0.05f, 0.6f, 0.4f);
+    displayText("Co-processor", 0.6f, 0.3f);
+}
+
+void drawScores(){
+    displayText("Score:", -0.9f, -0.5f);
+    displayText("0", -0.5f, -0.5f);
+    displayText("0", 0.5f, -0.5f);
+}
+
+void drawWinner(){
+    drawRectangle(-0.3f, -1.0f, 0.3f, -0.8f);
+    displayText("The Winner is TEAM 1", 0.0f, -0.9f);
+}
 
 void display()
 {
@@ -91,27 +119,17 @@ void display()
     // Set every pixel in the frame buffer to the current clear color.
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // draw round number
-    displayText("Round #1", 0.0f, 0.8f);
+    drawRound();
 
-    // draw parent
-    drawCircle(0.1f, 0.0f, 0.4f);
-    displayText("Parent", 0, 0.55f);
-    // displayText2("Child", 0, 0.55f);
+    drawParent();
 
-    // draw 4 children
-    drawCircle(0.05f, -0.7f, -0.3f);
-    displayText("1", -0.7f, -0.4f);
-    drawCircle(0.05f, -0.3f, -0.3f);
-    displayText("2", -0.3f, -0.4f);
-    drawCircle(0.05f, 0.3f, -0.3f);
-    displayText("3", 0.3f, -0.4f);
-    drawCircle(0.05f, 0.7f, -0.3f);
-    displayText("4", 0.7f, -0.4f);
+    drawTeams();
  
-    // draw coprocessor
-    drawCircle(0.05f, 0.6f, 0.4f);
-    displayText("coprocessor", 0.6f, 0.3f);
+    drawCoprocessor();
+    
+    drawScores();
+
+    drawWinner();
 
     // Flush drawing command buffer to make drawing happen asap.
     glFlush();
@@ -125,8 +143,8 @@ int main(int argc, char **argv)
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 
     // Window position (from top corner), and size (width and hieght)
-    glutInitWindowPosition(350, 70);
-    glutInitWindowSize(1200, 900);
+    glutInitWindowPosition(400, 30);
+    glutInitWindowSize(1000, 1000);
     glutCreateWindow("test");
 
     // Initialize OpenGL as we like it..
