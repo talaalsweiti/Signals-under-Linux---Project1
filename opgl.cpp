@@ -12,17 +12,18 @@ char *TEAM_2_SCORE = new char[STRING_SIZE];
 char *WINNER = new char[STRING_SIZE];
 char *MIN = new char[STRING_SIZE];
 char *MAX = new char[STRING_SIZE];
-char *CHILDREN_VALUES[NUM_OF_CHILDREN - 1];
+char *CHILDREN_VALUES[NUM_OF_CHILDREN - 1]; 
 char buffer[BUFSIZ];
 
 bool childFlag = false;
 bool fileFlag = false;
 bool winnerFlag = false;
+bool gameEndFlag = false;
 
 unsigned roundNum = 0;
 unsigned scores[2] = {0, 0};
 
-float r = 0.0f, g = 0.0f, b = 1.0f;
+// float r = 0.0f, g = 0.0f, b = 1.0f;
 
 void childrenView(int signum)
 {
@@ -31,9 +32,7 @@ void childrenView(int signum)
 }
 void gameEnd(int signum)
 {
-    r = 1.0f;
-    g = 0.0f;
-    b = 0.0f;
+    gameEndFlag = true;
     winnerFlag = true;
     int fifo;
     if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
@@ -192,7 +191,7 @@ void displayText(char *text, float cx, float cy)
     }
 }
 
-void drawRectangle(float x1, float y1, float x2, float y2)
+void drawRectangle(float r, float g, float b, float x1, float y1, float x2, float y2)
 {
 
     glBegin(GL_QUADS); // draw a quad
@@ -207,7 +206,7 @@ void drawRectangle(float x1, float y1, float x2, float y2)
 
 void drawRound()
 {
-    drawRectangle(-0.2f, 0.8f, 0.2f, 1.0f);
+    drawRectangle(0.0f, 0.0f, 1.0f, -0.2f, 0.8f, 0.2f, 1.0f);
     displayText(ROUND, 0.0f, 0.9f);
 }
 
@@ -219,8 +218,8 @@ void drawParent()
 
 void drawRangeFile()
 {
-    drawRectangle(-0.75f, 0.4f, -0.69f, 0.47f); // TODO: Change color of the file
-    drawRectangle(-0.73f, 0.42f, -0.67f, 0.49f);
+    drawRectangle(0.0f, 1.0f, 0.0f, -0.75f, 0.4f, -0.69f, 0.47f); // TODO: Change color of the file
+    drawRectangle(0.0f, 1.0f, 0.0f, -0.73f, 0.42f, -0.67f, 0.49f);
     displayText("Range.txt", -0.71f, 0.34f);
     displayText(MIN, -0.71f, 0.24f);
     displayText(MAX, -0.71f, 0.14f);
@@ -260,7 +259,12 @@ void drawScores()
 
 void drawWinner()
 {
-    drawRectangle(-0.3f, -1.0f, 0.3f, -0.8f);
+    float r = 0.0f, g=0.0f, b=1.0f;
+    if(gameEndFlag){
+        r = 1.0f;
+        b = 0.0f;
+    }
+    drawRectangle(r, g, b, -0.3f, -1.0f, 0.3f, -0.8f);
     displayText(WINNER, 0.0f, -0.9f);
 }
 
