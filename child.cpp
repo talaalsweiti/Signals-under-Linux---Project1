@@ -7,6 +7,7 @@ void beginSignalCatcher(int);
 int main()
 {
     cout << "I am Child\n";
+    srand((unsigned)getpid());
 
     if (sigset(SIGUSR1, beginSignalCatcher) == SIG_ERR)
     {
@@ -47,8 +48,6 @@ void beginSignalCatcher(int theSig) // generateValue
         rangeValues[i++] = substr;
     }
     // check for errors (empty line ...)
-
-    srand((unsigned)getpid());
 
     int minValue = stoi(rangeValues[0]);
     int maxValue = stoi(rangeValues[1]);

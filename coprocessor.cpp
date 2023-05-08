@@ -28,7 +28,7 @@ int main()
         close(fifo);
 
         stringstream messageStream(buffer);
-        memset(buffer, 0x0, BUFSIZ);
+        // memset(buffer, 0x0, BUFSIZ);
 
         unsigned int i = 0;
         while (messageStream.good() && i < NUM_OF_CHILDREN - 1)
