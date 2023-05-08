@@ -1,3 +1,9 @@
+/*
+    opgl visualize the game steps. 
+    It is informed by the parent at the end of each step using signals and FIFOs.
+*/
+
+
 #include <GL/glut.h>
 #include <math.h>
 
@@ -6,6 +12,7 @@
 #define STRING_SIZE 16
 using namespace std;
 
+/* Declare the needed variables */
 char *ROUND = new char[STRING_SIZE];
 char *TEAM_1_SCORE = new char[STRING_SIZE];
 char *TEAM_2_SCORE = new char[STRING_SIZE];
@@ -23,13 +30,20 @@ bool gameEndFlag = false;
 unsigned roundNum = 0;
 unsigned scores[2] = {0, 0};
 
-// float r = 0.0f, g = 0.0f, b = 1.0f;
-
+/*
+    This function is the SIGUSR1 Signal Handler.
+    It displays the children once they are created
+*/
 void childrenView(int signum)
 {
     childFlag = true;
     glutPostRedisplay();
 }
+
+/*
+    This function is the SIGRTMIN+3 Signal Handler.
+    It displays the final winner of the game
+*/
 void gameEnd(int signum)
 {
     gameEndFlag = true;
@@ -49,6 +63,10 @@ void gameEnd(int signum)
     glutPostRedisplay();
 }
 
+/*
+    This function is the SIGRTMIN Signal Handler.
+    It adjust the 
+*/
 void roundBegin(int signum)
 {
     roundNum++;
@@ -218,8 +236,8 @@ void drawParent()
 
 void drawRangeFile()
 {
-    drawRectangle(0.0f, 1.0f, 0.0f, -0.75f, 0.4f, -0.69f, 0.47f); // TODO: Change color of the file
-    drawRectangle(0.0f, 1.0f, 0.0f, -0.73f, 0.42f, -0.67f, 0.49f);
+    drawRectangle(0.9725f, 0.8941f, 0.5067f, -0.75f, 0.4f, -0.69f, 0.47f); // TODO: Change color of the file
+    drawRectangle(0.9725f, 0.8941f, 0.5067f, -0.73f, 0.42f, -0.67f, 0.49f);
     displayText("Range.txt", -0.71f, 0.34f);
     displayText(MIN, -0.71f, 0.24f);
     displayText(MAX, -0.71f, 0.14f);
