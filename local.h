@@ -21,6 +21,4 @@
 #define NUM_OF_CHILDREN 5
 #define NUM_OF_TEAMS 2
 
-
 #endif
-

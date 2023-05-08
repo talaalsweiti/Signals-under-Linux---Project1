@@ -10,10 +10,7 @@ void childValueSignalCatcher(int);
 void cleanup();
 int processValues(string);
 
-/*
-WHY NOT USING BUFSIZE???
-*/
-char buffer[1024];
+char buffer[BUFSIZ];
 using namespace std;
 unsigned children[NUM_OF_CHILDREN];
 unsigned teamsScore[NUM_OF_TEAMS];
@@ -84,7 +81,7 @@ int main(int argc, char *argv[])
             sleep(1);
         }
 
-        while (sigCount < NUM_OF_CHILDREN-1)
+        while (sigCount < NUM_OF_CHILDREN - 1)
         {
             pause();
         }
@@ -144,14 +141,14 @@ void generateRange()
     rangeFile.close();
 }
 
-void childDeadSignalCatcher(int theSig)
+void childDeadSignalCatcher(int signum)
 {
     cout << "A child failed\n";
     cleanup();
-    exit(theSig);
+    exit(signum);
 }
 
-void childValueSignalCatcher(int theSig)
+void childValueSignalCatcher(int signum)
 {
     sigCount++;
 }
@@ -164,18 +161,25 @@ void cleanup()
     {
         kill(child, SIGKILL);
     }
-
-    for (unsigned int i = 0; i < NUM_OF_CHILDREN-1; i++)
+    string fileName;
+    for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
     {
-        string fileName = "/tmp/" + to_string(children[i]) + ".txt";
-        int result = unlink(fileName.c_str());
-        // if(!result){
-        //     // if was not successfull do sth
-        //     // if the program terminated before creating the file?
-        // }
+        fileName = "/tmp/" + to_string(children[i]) + ".txt";
+        if (unlink(fileName.c_str()))
+        {
+            cout << "Unable to delete " << fileName << " , file does not exists" << endl;
+        }
     }
-    string fileName = "/tmp/range.txt";
-    int result = unlink(fileName.c_str());
+    fileName = "/tmp/range.txt";
+    if (unlink(fileName.c_str()))
+    {
+        cout << "Unable to delete " << fileName << " , file does not exists" << endl;
+    }
+    if (unlink(FIFO))
+    {
+        perror("Error Deleting FIFO");
+        exit(4);
+    }
     exit(0);
 }
 
@@ -183,7 +187,7 @@ string manageChildrenValues()
 {
 
     string values;
-    for (unsigned int i = 0; i < NUM_OF_CHILDREN-1; i++)
+    for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
     {
         string fileName = "/tmp/" + to_string(children[i]) + ".txt";
         ifstream childFile(fileName);
@@ -201,15 +205,12 @@ string manageChildrenValues()
             values += ",";
         }
     }
-    // cout << values << "\n";
     return values;
-    // send values to coprocessor via pipe
 }
 
 int processValues(string values)
 {
     int fifo;
-    // if (!(fifo = open(FIFO, O_RDWR)))
     if (!(fifo = open(FIFO, O_WRONLY)))
     {
         perror(FIFO);
@@ -226,20 +227,21 @@ int processValues(string values)
         perror(FIFO);
         exit(7);
     }
-    // memset(buffer, 0x0, BUFSIZ);//?
+    memset(buffer, 0x0, BUFSIZ);
+
     read(fifo, buffer, sizeof(buffer));
+
     cout << "Parent recieved sums: " << buffer << "\n";
 
     close(fifo);
 
     stringstream messageStream(buffer);
+    memset(buffer, 0x0, BUFSIZ);
 
     unsigned int i = 0;
     double teamsValues[NUM_OF_TEAMS];
-    /*
-    is i< 2 for the number of teams
-    */
-    while (messageStream.good() && i < 2)
+
+    while (messageStream.good() && i < NUM_OF_TEAMS)
     {
         string substr;
         getline(messageStream, substr, ',');

@@ -7,15 +7,11 @@ char buffer[BUFSIZ];
 int main()
 {
 
-    // if ((fifo = open(FIFO, O_RDWR)) == -1)
-    // {
-    //     perror(FIFO);
-    //     exit(7);
-    // }
     printf("coprocessor\n");
     while (1)
     {
-        double values[NUM_OF_CHILDREN-1];
+
+        double values[NUM_OF_CHILDREN - 1];
         double teamSum[NUM_OF_TEAMS];
 
         if ((fifo = open(FIFO, O_RDONLY)) == -1)
@@ -24,15 +20,19 @@ int main()
             exit(7);
         }
 
-        // memset(buffer, 0x0, BUFSIZ); 
+        memset(buffer, 0x0, BUFSIZ);
         read(fifo, buffer, sizeof(buffer));
+
+        cout << "MESSAGE RECIVED IN PROCESSOR: " << buffer << endl;
+        fflush(stdout);
 
         close(fifo);
 
         stringstream messageStream(buffer);
+        memset(buffer, 0x0, BUFSIZ);
 
         unsigned int i = 0;
-        while (messageStream.good() && i < NUM_OF_CHILDREN-1)
+        while (messageStream.good() && i < NUM_OF_CHILDREN - 1)
         {
             string substr;
             getline(messageStream, substr, ',');
@@ -49,7 +49,6 @@ int main()
         cout << "Coprocessor:: team2 sum: " << teamSum[1] << "\n";
         fflush(stdout);
 
-
         if ((fifo = open(FIFO, O_WRONLY)) == -1)
         {
             perror(FIFO);
@@ -57,10 +56,11 @@ int main()
         }
 
         write(fifo, teamsResult.c_str(), teamsResult.length() + 1);
-
+        cout << "MESSAGE WROTE BY PROCESSOR : " << teamsResult << endl;
+        fflush(stdout);
         close(fifo);
-        // while (1)
-        //     ;
+
+        // close(fifo);
     }
     close(fifo);
     return 0;
