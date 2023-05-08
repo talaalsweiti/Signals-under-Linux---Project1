@@ -91,12 +91,29 @@ int main(int argc, char *argv[])
         string values = manageChildrenValues();
 
         int winner = processValues(values);
-        printf("The winner team for round %d is team %d\n\n\n", r + 1, winner + 1);
+        if (winner == -1)
+        {
+            printf("DRAW, No winner in this round\n");
+        }
+        else
+        {
+            printf("The winner team for round %d is team %d\n\n\n", r + 1, winner + 1);
+        }
 
         sleep(2);
     }
-    int winner = teamsScore[0] > teamsScore[1] ? 0 : 1;
-    printf("the overall winner team is team %d\n", winner + 1);
+    if (teamsScore[0] > teamsScore[1])
+    {
+        printf("The overall winner team is team 1\n");
+    }
+    else if (teamsScore[0] < teamsScore[1])
+    {
+        printf("The overall winner team is team 2\n");
+    }
+    else
+    {
+        printf("DRAW, between the two teams\n");
+    }
 
     cleanup();
 }
@@ -227,9 +244,13 @@ int processValues(string values)
         teamsScore[1]++;
         return 1;
     }
+    else if (teamsValues[1] < teamsValues[0])
+    {
 
-    teamsScore[0]++;
-    return 0;
+        teamsScore[0]++;
+        return 0;
+    }
+    return -1;
 }
 
 void cleanup()

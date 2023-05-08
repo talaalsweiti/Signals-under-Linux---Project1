@@ -14,7 +14,10 @@ int main()
         exit(SIGUSR1);
     }
     while (1)
-        ;
+    {
+        pause();
+    }
+
     return 0;
 }
 
