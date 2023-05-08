@@ -9,12 +9,17 @@ void childDeadSignalCatcher(int);
 void childValueSignalCatcher(int);
 void cleanup();
 int processValues(string);
+void createOpenglProcess();
+void createFifo(const char *);
+void sendToOpgl(string);
 
 char buffer[BUFSIZ];
 using namespace std;
 unsigned children[NUM_OF_CHILDREN];
+pid_t opglPid;
 unsigned teamsScore[NUM_OF_TEAMS];
 unsigned sigCount = 0;
+unsigned rangeValues[2];
 
 int main(int argc, char *argv[])
 {
@@ -42,30 +47,37 @@ int main(int argc, char *argv[])
         }
     }
 
-    sigset(SIGUSR1, childValueSignalCatcher);
-    sigset(SIGCHLD, childDeadSignalCatcher);
-    sigset(SIGINT, childDeadSignalCatcher);
+    if (sigset(SIGUSR1, childValueSignalCatcher) == SIG_ERR)
+    {
+        perror("SIGUSR1 handler");
+        exit(9);
+    }
+    if (sigset(SIGCHLD, childDeadSignalCatcher) == SIG_ERR)
+    {
+        perror("SIGCHLD handler");
+        exit(10);
+    }
+    if (sigset(SIGINT, childDeadSignalCatcher) == SIG_ERR)
+    {
+        perror("SIGINT handler");
+        exit(11);
+    }
+
+    createFifo(FIFO);
+    createFifo(OPENGL_FIFO);
+
+    createOpenglProcess();
+
+    sleep(2); // ???
 
     for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
     {
         createProcesses("./child", i);
     }
 
-    if ((mknod(FIFO, S_IFIFO | 0666, 0)) == -1)
-    {
-
-        if (unlink(FIFO))
-        {
-            perror("Error Deleting FIFO");
-            exit(4);
-        }
-        if ((mknod(FIFO, S_IFIFO | 0666, 0)) == -1)
-        {
-            perror("Error Creating FIFO");
-            exit(5);
-        }
-    }
     createProcesses("./coprocessor", 4);
+
+    kill(opglPid, SIGUSR1);
 
     srand((unsigned)getpid());
 
@@ -80,6 +92,10 @@ int main(int argc, char *argv[])
             kill(children[i], SIGUSR1);
             sleep(1);
         }
+
+        kill(opglPid, SIGUSR2);
+        sendToOpgl(to_string(rangeValues[0]) + "," + to_string(rangeValues[1]));
+        // sleep(3);
 
         while (sigCount < NUM_OF_CHILDREN - 1)
         {
@@ -143,16 +159,17 @@ void generateRange()
     ofstream rangeFile;
     rangeFile.open("/tmp/range.txt");
 
-    int minValue = rand();
-    int maxValue = rand();
+    rangeValues[0] = rand();
+    rangeValues[1] = rand();
 
-    if (minValue > maxValue)
+    if (rangeValues[0] > rangeValues[1])
     {
-        swap(minValue, maxValue);
+        swap(rangeValues[0], rangeValues[1]);
     }
 
-    rangeFile << minValue << "," << maxValue;
-    cout << "Parent:: Range: " << minValue << "," << maxValue << "\n";
+    rangeFile << rangeValues[0] << "," << rangeValues[1];
+
+    cout << "Parent:: Range: " << rangeValues[0] << "," << rangeValues[1] << "\n";
 
     rangeFile.close();
 }
@@ -281,4 +298,54 @@ void cleanup()
         exit(4);
     }
     exit(0);
+}
+
+void createOpenglProcess()
+{
+    pid_t pid = fork();
+    switch (pid)
+    {
+    case -1:
+        perror("Fork");
+        exit(6);
+
+    case 0: /* In the child */
+        execlp("./opgl", "./opgl", (char *)NULL);
+        perror("exec failure ");
+        exit(7);
+        break;
+
+    default: /* In the parent */
+        opglPid = pid;
+    }
+}
+
+void sendToOpgl(string message)
+{
+    int fifo;
+    if (!(fifo = open(OPENGL_FIFO, O_WRONLY)))
+    {
+        perror(OPENGL_FIFO);
+        exit(12);
+    }
+    write(fifo, message.c_str(), message.length() + 1);
+    close(fifo);
+}
+
+void createFifo(const char *fifoName)
+{
+    if ((mknod(fifoName, S_IFIFO | 0666, 0)) == -1)
+    {
+
+        if (unlink(fifoName))
+        {
+            perror("Error Deleting FIFO");
+            exit(4);
+        }
+        if ((mknod(fifoName, S_IFIFO | 0666, 0)) == -1)
+        {
+            perror("Error Creating FIFO");
+            exit(5);
+        }
+    }
 }

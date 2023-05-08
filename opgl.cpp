@@ -1,20 +1,67 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <GL/glut.h>
 #include <math.h>
-#include <string>
-#include <string.h>
+
+#include "local.h"
+
+using namespace std;
 
 char *ROUND = "Round #1";
 char *TEAM_1_SCORE = "0";
 char *TEAM_2_SCORE = "0";
 char *WINNER = "The Winner is TEAM 1";
-char *MIN = "Min: 1000000000";
-char *MAX = "Max: 10000000000";
+char *MIN;
+char *MAX;
+char buffer[BUFSIZ];
+
+bool child = false;
+bool file = false;
+
+void childrenView(int signum)
+{
+    child = true;
+    glutPostRedisplay();
+}
+
+void readRangeFile(int signum)
+{
+    int fifo;
+    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
+    {
+        perror(OPENGL_FIFO);
+        exit(1);
+    }
+    memset(buffer, 0x0, BUFSIZ);
+    read(fifo, buffer, sizeof(buffer));
+
+    stringstream messageStream(buffer);
+
+
+    close(fifo);
+    file = true;
+
+    vector<string> rangeValues(2);
+    unsigned int i = 0;
+
+
+    while (messageStream.good())
+    {
+        string substr;
+        getline(messageStream, substr, ',');
+        rangeValues[i++] = substr;
+    }
+    rangeValues[0] = "MIN = " + rangeValues[0];
+    rangeValues[1] = "MAX = " + rangeValues[1];
+    MIN = new char[rangeValues[0].length() + 1];
+    MAX = new char[rangeValues[1].length() + 1];
+    strcpy(MIN, rangeValues[0].c_str());
+    strcpy(MAX, rangeValues[1].c_str());
+    glutPostRedisplay();
+}
+
 void reshape(int width, int height)
 {
     // Keep the viewport size fixed at 800x600 pixels
-    glViewport(0, 0, 1000, 1000);
+    glViewport(width / 2 - 500, height / 2 - 500, 1000, 1000);
 }
 
 void drawCircle(float r, float x, float y)
@@ -150,14 +197,17 @@ void display()
     drawRound();
 
     drawParent();
+    if (file)
+    {
+        drawRangeFile();
+    }
 
-    drawRangeFile();
-
-    drawTeams();
-
-    drawCoprocessor();
-
-    drawScores();
+    if (child)
+    {
+        drawTeams();
+        drawCoprocessor();
+        drawScores();
+    }
 
     drawWinner();
 
@@ -167,6 +217,9 @@ void display()
 
 int main(int argc, char **argv)
 {
+    sigset(SIGUSR1, childrenView);
+    sigset(SIGUSR2, readRangeFile);
+
     glutInit(&argc, argv);
 
     // The image is not animated so single buffering is OK.
@@ -175,7 +228,7 @@ int main(int argc, char **argv)
     // Window position (from top corner), and size (width and hieght)
     glutInitWindowPosition(400, 30);
     glutInitWindowSize(1000, 1000);
-    glutCreateWindow("test");
+    glutCreateWindow("Project#1");
 
     // Initialize OpenGL as we like it..
     // glEnable ( GL_DEPTH_TEST );

@@ -18,6 +18,7 @@
 #include <sstream>
 
 #define FIFO "/tmp/FIFO"
+#define OPENGL_FIFO "/tmp/OPENGL_FIFO"
 #define NUM_OF_CHILDREN 5
 #define NUM_OF_TEAMS 2
 
