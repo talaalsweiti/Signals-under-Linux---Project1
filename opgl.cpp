@@ -3,26 +3,123 @@
 
 #include "local.h"
 
+#define STRING_SIZE 16
 using namespace std;
 
-char *ROUND = "Round #1";
-char *TEAM_1_SCORE = "0";
-char *TEAM_2_SCORE = "0";
-char *WINNER = "The Winner is TEAM 1";
-char *MIN;
-char *MAX;
+char *ROUND = new char[STRING_SIZE];
+char *TEAM_1_SCORE = new char[STRING_SIZE];
+char *TEAM_2_SCORE = new char[STRING_SIZE];
+char *WINNER = new char[STRING_SIZE];
+char *MIN = new char[STRING_SIZE];
+char *MAX = new char[STRING_SIZE];
+char *CHILDREN_VALUES[NUM_OF_CHILDREN - 1];
 char buffer[BUFSIZ];
 
-bool child = false;
-bool file = false;
+bool childFlag = false;
+bool fileFlag = false;
+bool winnerFlag = false;
+
+unsigned roundNum = 0;
+unsigned scores[2] = {0, 0};
+
+float r = 0.0f, g = 0.0f, b = 1.0f;
 
 void childrenView(int signum)
 {
-    child = true;
+    childFlag = true;
+    glutPostRedisplay();
+}
+void gameEnd(int signum)
+{
+    r = 1.0f;
+    g = 0.0f;
+    b = 0.0f;
+    winnerFlag = true;
+    int fifo;
+    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
+    {
+        perror(OPENGL_FIFO);
+        exit(7);
+    }
+
+    memset(buffer, 0x0, BUFSIZ);
+    read(fifo, buffer, sizeof(buffer));
+
+    close(fifo);
+    strcpy(WINNER, buffer);
     glutPostRedisplay();
 }
 
-void readRangeFile(int signum)
+void roundBegin(int signum)
+{
+    roundNum++;
+    winnerFlag = false;
+    string roundStr = "Round #" + to_string(roundNum);
+    strcpy(ROUND, roundStr.c_str());
+    glutPostRedisplay();
+}
+
+void roundWinner(int signum)
+{
+    winnerFlag = true;
+    int fifo;
+    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
+    {
+        perror(OPENGL_FIFO);
+        exit(7);
+    }
+
+    memset(buffer, 0x0, BUFSIZ);
+    read(fifo, buffer, sizeof(buffer));
+
+    close(fifo);
+    int winner = stoi(buffer);
+    string winnerStr;
+    if (winner == -1)
+    {
+        winnerStr = "Round #" + to_string(roundNum) + ": DRAW, No Winner";
+    }
+    else
+    {
+        scores[winner]++;
+
+        winnerStr = "Round #" + to_string(roundNum) + " Winner is Team " + to_string(winner + 1);
+    }
+    strcpy(WINNER, winnerStr.c_str());
+    strcpy(TEAM_1_SCORE, (to_string(scores[0])).c_str());
+    strcpy(TEAM_2_SCORE, (to_string(scores[1])).c_str());
+
+    glutPostRedisplay();
+}
+
+void readChildrenValues(int signum)
+{
+    int fifo;
+    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
+    {
+        perror(OPENGL_FIFO);
+        exit(7);
+    }
+
+    memset(buffer, 0x0, BUFSIZ);
+    read(fifo, buffer, sizeof(buffer));
+
+    close(fifo);
+
+    stringstream messageStream(buffer);
+    cout << buffer << endl;
+
+    unsigned int i = 0;
+    while (messageStream.good() && i < NUM_OF_CHILDREN - 1)
+    {
+        string substr;
+        getline(messageStream, substr, ',');
+        strcpy(CHILDREN_VALUES[i++], substr.c_str());
+    }
+    glutPostRedisplay();
+}
+
+void readRangeValues(int signum)
 {
     int fifo;
     if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
@@ -35,13 +132,11 @@ void readRangeFile(int signum)
 
     stringstream messageStream(buffer);
 
-
     close(fifo);
-    file = true;
+    fileFlag = true;
 
     vector<string> rangeValues(2);
     unsigned int i = 0;
-
 
     while (messageStream.good())
     {
@@ -51,8 +146,6 @@ void readRangeFile(int signum)
     }
     rangeValues[0] = "MIN = " + rangeValues[0];
     rangeValues[1] = "MAX = " + rangeValues[1];
-    MIN = new char[rangeValues[0].length() + 1];
-    MAX = new char[rangeValues[1].length() + 1];
     strcpy(MIN, rangeValues[0].c_str());
     strcpy(MAX, rangeValues[1].c_str());
     glutPostRedisplay();
@@ -103,7 +196,7 @@ void drawRectangle(float x1, float y1, float x2, float y2)
 {
 
     glBegin(GL_QUADS); // draw a quad
-    glColor3f(0.0f, 0.0f, 1.0f);
+    glColor3f(r, g, b);
     // -0.2f, -1.0f, 0.2f, -1.0f
     glVertex2f(x1, y1); // bottom left corner
     glVertex2f(x2, y1); // bottom right corner
@@ -137,14 +230,18 @@ void drawTeams()
 {
     drawCircle(0.05f, -0.7f, -0.2f);
     displayText("1", -0.7f, -0.3f);
+    displayText(CHILDREN_VALUES[0], -0.7f, -0.1f);
     drawCircle(0.05f, -0.3f, -0.2f);
     displayText("2", -0.3f, -0.3f);
+    displayText(CHILDREN_VALUES[1], -0.3f, -0.1f);
     displayText("Team 1", -0.5f, -0.4f);
 
     drawCircle(0.05f, 0.3f, -0.2f);
     displayText("3", 0.3f, -0.3f);
+    displayText(CHILDREN_VALUES[2], 0.3f, -0.1f);
     drawCircle(0.05f, 0.7f, -0.2f);
     displayText("4", 0.7f, -0.3f);
+    displayText(CHILDREN_VALUES[3], 0.7f, -0.1f);
     displayText("Team 2", 0.5f, -0.4f);
 }
 
@@ -167,26 +264,6 @@ void drawWinner()
     displayText(WINNER, 0.0f, -0.9f);
 }
 
-void redraw()
-{
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    drawRound();
-
-    drawParent();
-
-    drawRangeFile();
-
-    drawTeams();
-
-    drawCoprocessor();
-
-    drawScores();
-
-    drawWinner();
-}
-
 void display()
 {
     // reshape();
@@ -197,19 +274,22 @@ void display()
     drawRound();
 
     drawParent();
-    if (file)
+    if (fileFlag)
     {
         drawRangeFile();
     }
 
-    if (child)
+    if (childFlag)
     {
         drawTeams();
         drawCoprocessor();
         drawScores();
     }
 
-    drawWinner();
+    if (winnerFlag)
+    {
+        drawWinner();
+    }
 
     // Flush drawing command buffer to make drawing happen asap.
     glFlush();
@@ -217,8 +297,43 @@ void display()
 
 int main(int argc, char **argv)
 {
-    sigset(SIGUSR1, childrenView);
-    sigset(SIGUSR2, readRangeFile);
+    strcpy(TEAM_1_SCORE, "0");
+    strcpy(TEAM_2_SCORE, "0");
+    for (int i = 0; i < NUM_OF_CHILDREN - 1; i++)
+    {
+        CHILDREN_VALUES[i] = new char[STRING_SIZE];
+        CHILDREN_VALUES[i][0] = 0x0;
+    }
+    if (sigset(SIGUSR1, childrenView) == SIG_ERR)
+    {
+        perror("SIGUSR1 handler");
+        exit(1);
+    }
+    if (sigset(SIGUSR2, readRangeValues) == SIG_ERR)
+    {
+        perror("SIGUSR2 handler");
+        exit(2);
+    }
+    if (sigset(SIGRTMIN + 1, readChildrenValues) == SIG_ERR)
+    {
+        perror("SIGRTMIN+1 handler");
+        exit(2);
+    }
+    if (sigset(SIGRTMIN + 2, roundWinner) == SIG_ERR)
+    {
+        perror("SIGRTMIN+2 handler");
+        exit(2);
+    }
+    if (sigset(SIGRTMIN + 3, gameEnd) == SIG_ERR)
+    {
+        perror("SIGRTMIN+3 handler");
+        exit(2);
+    }
+    if (sigset(SIGRTMIN, roundBegin) == SIG_ERR)
+    {
+        perror("SIGRTMIN handler");
+        exit(2);
+    }
 
     glutInit(&argc, argv);
 

@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 
     createOpenglProcess();
 
-    sleep(2); // ???
+    sleep(2); // display
 
     for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
     {
@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
     sleep(2);
     for (unsigned int r = 0; r < rounds; r++)
     {
+        kill(opglPid, SIGRTMIN);
         sigCount = 0;
         generateRange();
 
@@ -95,7 +96,6 @@ int main(int argc, char *argv[])
 
         kill(opglPid, SIGUSR2);
         sendToOpgl(to_string(rangeValues[0]) + "," + to_string(rangeValues[1]));
-        // sleep(3);
 
         while (sigCount < NUM_OF_CHILDREN - 1)
         {
@@ -105,8 +105,14 @@ int main(int argc, char *argv[])
         cout << "children finished writing" << endl;
 
         string values = manageChildrenValues();
+        sleep(1); // dispay
+        kill(opglPid, SIGRTMIN + 1);
+        sendToOpgl(values);
 
         int winner = processValues(values);
+        kill(opglPid, SIGRTMIN + 2);
+        sendToOpgl(to_string(winner));
+
         if (winner == -1)
         {
             printf("DRAW, No winner in this round\n");
@@ -118,18 +124,23 @@ int main(int argc, char *argv[])
 
         sleep(2);
     }
+
+    string msg;
     if (teamsScore[0] > teamsScore[1])
     {
-        printf("The overall winner team is team 1\n");
+        msg = "Winner is Team 1";
     }
     else if (teamsScore[0] < teamsScore[1])
     {
-        printf("The overall winner team is team 2\n");
+        msg = "Winner is Team 2";
     }
     else
     {
-        printf("DRAW, between the two teams\n");
+        msg = "DRAW, No Winner";
     }
+    cout << msg << endl;
+    kill(opglPid, SIGRTMIN + 3);
+    sendToOpgl(msg);
 
     cleanup();
 }
