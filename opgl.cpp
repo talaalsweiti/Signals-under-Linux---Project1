@@ -3,7 +3,6 @@
     It is informed by the parent at the end of each step using signals and FIFOs.
 */
 
-
 #include <GL/glut.h>
 #include <math.h>
 
@@ -30,20 +29,14 @@ bool gameEndFlag = false;
 unsigned roundNum = 0;
 unsigned scores[2] = {0, 0};
 
-/*
-    This function is the SIGUSR1 Signal Handler.
-    It displays the children once they are created
-*/
+/* This function is the SIGUSR1 Signal Handler. It displays the children once they are created */
 void childrenView(int signum)
 {
     childFlag = true;
-    glutPostRedisplay();
+    glutPostRedisplay(); /* redisplay when a variable changes */
 }
 
-/*
-    This function is the SIGRTMIN+3 Signal Handler.
-    It displays the final winner of the game
-*/
+/* This function is the SIGRTMIN+3 Signal Handler. It displays the final winner of the game */
 void gameEnd(int signum)
 {
     gameEndFlag = true;
@@ -63,10 +56,7 @@ void gameEnd(int signum)
     glutPostRedisplay();
 }
 
-/*
-    This function is the SIGRTMIN Signal Handler.
-    It adjust the 
-*/
+/* This function is the SIGRTMIN Signal Handler. It displays the round number */
 void roundBegin(int signum)
 {
     roundNum++;
@@ -76,20 +66,23 @@ void roundBegin(int signum)
     glutPostRedisplay();
 }
 
+/* this function displays the round winner */
 void roundWinner(int signum)
 {
     winnerFlag = true;
     int fifo;
-    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
+    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1) /* open FIFO for reading */
     {
         perror(OPENGL_FIFO);
         exit(7);
     }
 
     memset(buffer, 0x0, BUFSIZ);
-    read(fifo, buffer, sizeof(buffer));
+    read(fifo, buffer, sizeof(buffer)); /* read from the FIFO to the buffer */
 
-    close(fifo);
+    close(fifo); /* Close the FIFO */
+
+    /* Display the winner of the round accordingly */
     int winner = stoi(buffer);
     string winnerStr;
     if (winner == -1)
@@ -109,6 +102,7 @@ void roundWinner(int signum)
     glutPostRedisplay();
 }
 
+/* this function reads the string of children values, splits, and displays them */
 void readChildrenValues(int signum)
 {
     int fifo;
@@ -136,21 +130,24 @@ void readChildrenValues(int signum)
     glutPostRedisplay();
 }
 
+/* this function reads the range string, splits it and displays the MIN and MAX */
 void readRangeValues(int signum)
 {
     int fifo;
-    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1)
+    if ((fifo = open(OPENGL_FIFO, O_RDONLY)) == -1) /* Open FIFO for read only */
     {
         perror(OPENGL_FIFO);
         exit(1);
     }
     memset(buffer, 0x0, BUFSIZ);
-    read(fifo, buffer, sizeof(buffer));
+    read(fifo, buffer, sizeof(buffer)); /* read the FIFO content into the buffer */
+
+
+    close(fifo); /* CLose the FIFO */
+
+    fileFlag = true;
 
     stringstream messageStream(buffer);
-
-    close(fifo);
-    fileFlag = true;
 
     vector<string> rangeValues(2);
     unsigned int i = 0;
@@ -165,18 +162,19 @@ void readRangeValues(int signum)
     rangeValues[1] = "MAX = " + rangeValues[1];
     strcpy(MIN, rangeValues[0].c_str());
     strcpy(MAX, rangeValues[1].c_str());
+
     glutPostRedisplay();
 }
 
+/* this function is executed when the window width and/or height are changed */
 void reshape(int width, int height)
 {
-    // Keep the viewport size fixed at 800x600 pixels
     glViewport(width / 2 - 500, height / 2 - 500, 1000, 1000);
 }
 
+/* this function draws a circle with radius r, at position (x,y) */
 void drawCircle(float r, float x, float y)
 {
-
     float i = 0.0f;
 
     glBegin(GL_TRIANGLE_FAN);
@@ -188,6 +186,7 @@ void drawCircle(float r, float x, float y)
     glEnd();
 }
 
+/* display passed text centered at position (cx, cy) */
 void displayText(char *text, float cx, float cy)
 {
     // Set the color to white
@@ -209,12 +208,12 @@ void displayText(char *text, float cx, float cy)
     }
 }
 
+/* draw a rectangle of color(r,g,b) with point coordinates passed */
 void drawRectangle(float r, float g, float b, float x1, float y1, float x2, float y2)
 {
 
     glBegin(GL_QUADS); // draw a quad
     glColor3f(r, g, b);
-    // -0.2f, -1.0f, 0.2f, -1.0f
     glVertex2f(x1, y1); // bottom left corner
     glVertex2f(x2, y1); // bottom right corner
     glVertex2f(x2, y2); // top right corner
@@ -222,18 +221,21 @@ void drawRectangle(float r, float g, float b, float x1, float y1, float x2, floa
     glEnd();
 }
 
+/* display the round # at the top of the window */
 void drawRound()
 {
     drawRectangle(0.0f, 0.0f, 1.0f, -0.2f, 0.8f, 0.2f, 1.0f);
     displayText(ROUND, 0.0f, 0.9f);
 }
 
+/* draw the parent node in the window */
 void drawParent()
 {
     drawCircle(0.1f, 0.0f, 0.4f);
     displayText("Parent", 0, 0.55f);
 }
 
+/* draw the file symbol, name, and min max */
 void drawRangeFile()
 {
     drawRectangle(0.9725f, 0.8941f, 0.5067f, -0.75f, 0.4f, -0.69f, 0.47f); // TODO: Change color of the file
@@ -243,6 +245,7 @@ void drawRangeFile()
     displayText(MAX, -0.71f, 0.14f);
 }
 
+/* draw the children nodes with numbers, team names and generated names values */
 void drawTeams()
 {
     drawCircle(0.05f, -0.7f, -0.2f);
@@ -262,12 +265,14 @@ void drawTeams()
     displayText("Team 2", 0.5f, -0.4f);
 }
 
+/* draw the coprocessor node */
 void drawCoprocessor()
 {
     drawCircle(0.05f, 0.6f, 0.4f);
     displayText("Co-processor", 0.6f, 0.3f);
 }
 
+/* display the current scores for the teams */
 void drawScores()
 {
     displayText("Score:", -0.9f, -0.5f);
@@ -275,6 +280,7 @@ void drawScores()
     displayText(TEAM_2_SCORE, 0.5f, -0.5f);
 }
 
+/* display the round winner and the game winner when the game is over */
 void drawWinner()
 {
     float r = 0.0f, g=0.0f, b=1.0f;
@@ -286,6 +292,7 @@ void drawWinner()
     displayText(WINNER, 0.0f, -0.9f);
 }
 
+/* main function for displaying the window components */
 void display()
 {
     // reshape();
@@ -319,6 +326,7 @@ void display()
 
 int main(int argc, char **argv)
 {
+    /* initialize variables */
     strcpy(TEAM_1_SCORE, "0");
     strcpy(TEAM_2_SCORE, "0");
     for (int i = 0; i < NUM_OF_CHILDREN - 1; i++)
@@ -326,6 +334,8 @@ int main(int argc, char **argv)
         CHILDREN_VALUES[i] = new char[STRING_SIZE];
         CHILDREN_VALUES[i][0] = 0x0;
     }
+
+    /* this function sets all the catchable signals used for the opgl */
     if (sigset(SIGUSR1, childrenView) == SIG_ERR)
     {
         perror("SIGUSR1 handler");
@@ -366,9 +376,6 @@ int main(int argc, char **argv)
     glutInitWindowPosition(400, 30);
     glutInitWindowSize(1000, 1000);
     glutCreateWindow("Project#1");
-
-    // Initialize OpenGL as we like it..
-    // glEnable ( GL_DEPTH_TEST );
 
     // call this whenever window needs redrawing
     glutDisplayFunc(display);

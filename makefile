@@ -1,8 +1,6 @@
 CC = g++ # specify the used compiler
-CFLAGS = -g -Wall -std=c++11 # specify the options added on compile.
-# -g -> create gdb components for debugging
+CFLAGS = -Wall # specify the options added on compile.
 # -Wall -> allow all warnings
-# -std=c++11 -> use the C++11 language standard
 
 all: parent child coprocessor openglTest opgl
 
