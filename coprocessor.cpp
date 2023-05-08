@@ -24,7 +24,6 @@ int main()
         read(fifo, buffer, sizeof(buffer));
 
         cout << "MESSAGE RECIVED IN PROCESSOR: " << buffer << endl;
-        fflush(stdout);
 
         close(fifo);
 
@@ -45,9 +44,8 @@ int main()
         }
         string teamsResult = to_string(teamSum[0]) + "," + to_string(teamSum[1]);
 
-        cout << "Coprocessor:: team1 sum: " << teamSum[0] << "\n";
-        cout << "Coprocessor:: team2 sum: " << teamSum[1] << "\n";
-        fflush(stdout);
+        cout << "Coprocessor:: team1 sum: " << teamSum[0] << endl;
+        cout << "Coprocessor:: team2 sum: " << teamSum[1] << endl;
 
         if ((fifo = open(FIFO, O_WRONLY)) == -1)
         {
@@ -59,9 +57,6 @@ int main()
         cout << "MESSAGE WROTE BY PROCESSOR : " << teamsResult << endl;
         fflush(stdout);
         close(fifo);
-
-        // close(fifo);
     }
-    close(fifo);
     return 0;
 }

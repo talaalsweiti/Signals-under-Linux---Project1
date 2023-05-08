@@ -86,8 +86,7 @@ int main(int argc, char *argv[])
             pause();
         }
 
-        cout << "children finished writing\n";
-        fflush(stdout);
+        cout << "children finished writing" << endl;
 
         string values = manageChildrenValues();
 
@@ -153,43 +152,14 @@ void childValueSignalCatcher(int signum)
     sigCount++;
 }
 
-void cleanup()
-{
-    sigset(SIGCHLD, SIG_DFL);
-
-    for (auto child : children)
-    {
-        kill(child, SIGKILL);
-    }
-    string fileName;
-    for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
-    {
-        fileName = "/tmp/" + to_string(children[i]) + ".txt";
-        if (unlink(fileName.c_str()))
-        {
-            cout << "Unable to delete " << fileName << " , file does not exists" << endl;
-        }
-    }
-    fileName = "/tmp/range.txt";
-    if (unlink(fileName.c_str()))
-    {
-        cout << "Unable to delete " << fileName << " , file does not exists" << endl;
-    }
-    if (unlink(FIFO))
-    {
-        perror("Error Deleting FIFO");
-        exit(4);
-    }
-    exit(0);
-}
-
 string manageChildrenValues()
 {
 
     string values;
+    string fileName;
     for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
     {
-        string fileName = "/tmp/" + to_string(children[i]) + ".txt";
+        fileName = "/tmp/" + to_string(children[i]) + ".txt";
         ifstream childFile(fileName);
         if (!childFile.good())
         {
@@ -218,7 +188,7 @@ int processValues(string values)
     }
 
     write(fifo, values.c_str(), values.length() + 1);
-    cout << "Parent:: values: " << values << "\n";
+    cout << "Parent:: values: " << values << endl;
 
     close(fifo);
 
@@ -231,7 +201,7 @@ int processValues(string values)
 
     read(fifo, buffer, sizeof(buffer));
 
-    cout << "Parent recieved sums: " << buffer << "\n";
+    cout << "Parent recieved sums: " << buffer << endl;
 
     close(fifo);
 
@@ -248,9 +218,8 @@ int processValues(string values)
         teamsValues[i++] = stod(substr);
     }
 
-    cout << "Parent:: team1 sum: " << teamsValues[0] << "\n";
-    cout << "Parent:: team2 sum: " << teamsValues[1] << "\n";
-    fflush(stdout);
+    cout << "Parent:: team1 sum: " << teamsValues[0] << endl;
+    cout << "Parent:: team2 sum: " << teamsValues[1] << endl;
 
     sleep(2);
     if (teamsValues[1] > teamsValues[0])
@@ -258,9 +227,37 @@ int processValues(string values)
         teamsScore[1]++;
         return 1;
     }
-    else
+
+    teamsScore[0]++;
+    return 0;
+}
+
+void cleanup()
+{
+    sigset(SIGCHLD, SIG_DFL);
+
+    for (auto child : children)
     {
-        teamsScore[0]++;
-        return 0;
+        kill(child, SIGKILL);
     }
+    string fileName;
+    for (unsigned int i = 0; i < NUM_OF_CHILDREN - 1; i++)
+    {
+        fileName = "/tmp/" + to_string(children[i]) + ".txt";
+        if (unlink(fileName.c_str()))
+        {
+            cout << "Unable to delete " << fileName << " , file does not exists" << endl;
+        }
+    }
+    fileName = "/tmp/range.txt";
+    if (unlink(fileName.c_str()))
+    {
+        cout << "Unable to delete " << fileName << " , file does not exists" << endl;
+    }
+    if (unlink(FIFO))
+    {
+        perror("Error Deleting FIFO");
+        exit(4);
+    }
+    exit(0);
 }

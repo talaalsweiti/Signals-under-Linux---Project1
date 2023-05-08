@@ -5,13 +5,14 @@
 #include <string>
 #include <string.h>
 
-char* ROUND = "Round #1";
-char* TEAM_1_SCORE = "0";
-char* TEAM_2_SCORE = "0";
-char* WINNER = "The Winner is TEAM 1";
-
-
-void reshape(int width, int height) {
+char *ROUND = "Round #1";
+char *TEAM_1_SCORE = "0";
+char *TEAM_2_SCORE = "0";
+char *WINNER = "The Winner is TEAM 1";
+char *MIN = "Min: 1000000000";
+char *MAX = "Max: 10000000000";
+void reshape(int width, int height)
+{
     // Keep the viewport size fixed at 800x600 pixels
     glViewport(0, 0, 1000, 1000);
 }
@@ -30,7 +31,7 @@ void drawCircle(float r, float x, float y)
     glEnd();
 }
 
-void displayText(char* text, float cx, float cy)
+void displayText(char *text, float cx, float cy)
 {
     // Set the color to white
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -38,12 +39,11 @@ void displayText(char* text, float cx, float cy)
     int text_width = glutBitmapLength(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)text);
     int text_height = 24; // bitmap height for GLUT_BITMAP_TIMES_ROMAN_24
 
-    float x = cx - ((float)text_width /  (float)1000);
+    float x = cx - ((float)text_width / (float)1000);
     float y = cy - ((float)text_height / 2.0f / (float)glutGet(GLUT_WINDOW_HEIGHT));
 
     // Set the text position
     glRasterPos2f(x, y);
-
 
     // Draw the text character by character
     for (int i = 0; i < strlen(text); i++)
@@ -52,38 +52,42 @@ void displayText(char* text, float cx, float cy)
     }
 }
 
+void drawRectangle(float x1, float y1, float x2, float y2)
+{
 
-void drawRectangle(float x1, float y1, float x2, float y2) {
-    
     glBegin(GL_QUADS); // draw a quad
-        glColor3f(0.0f, 0.0f, 1.0f); 
-        // -0.2f, -1.0f, 0.2f, -1.0f
-        glVertex2f(x1, y1); // bottom left corner
-        glVertex2f(x2, y1); // bottom right corner
-        glVertex2f(x2, y2); // top right corner
-        glVertex2f(x1, y2); // top left corner
+    glColor3f(0.0f, 0.0f, 1.0f);
+    // -0.2f, -1.0f, 0.2f, -1.0f
+    glVertex2f(x1, y1); // bottom left corner
+    glVertex2f(x2, y1); // bottom right corner
+    glVertex2f(x2, y2); // top right corner
+    glVertex2f(x1, y2); // top left corner
     glEnd();
 }
 
-void drawRound(){
+void drawRound()
+{
     drawRectangle(-0.2f, 0.8f, 0.2f, 1.0f);
     displayText(ROUND, 0.0f, 0.9f);
 }
 
-void drawParent(){
+void drawParent()
+{
     drawCircle(0.1f, 0.0f, 0.4f);
     displayText("Parent", 0, 0.55f);
 }
 
-void drawRangeFile(){
+void drawRangeFile()
+{
     drawRectangle(-0.75f, 0.4f, -0.69f, 0.47f); // TODO: Change color of the file
     drawRectangle(-0.73f, 0.42f, -0.67f, 0.49f);
     displayText("Range.txt", -0.71f, 0.34f);
-    displayText("Min: 1000000000", -0.71f, 0.24f);
-    displayText("Max: 10000000000", -0.71f, 0.14f);
+    displayText(MIN, -0.71f, 0.24f);
+    displayText(MAX, -0.71f, 0.14f);
 }
 
-void drawTeams(){
+void drawTeams()
+{
     drawCircle(0.05f, -0.7f, -0.2f);
     displayText("1", -0.7f, -0.3f);
     drawCircle(0.05f, -0.3f, -0.2f);
@@ -97,41 +101,44 @@ void drawTeams(){
     displayText("Team 2", 0.5f, -0.4f);
 }
 
-void drawCoprocessor(){
+void drawCoprocessor()
+{
     drawCircle(0.05f, 0.6f, 0.4f);
     displayText("Co-processor", 0.6f, 0.3f);
 }
 
-void drawScores(){
+void drawScores()
+{
     displayText("Score:", -0.9f, -0.5f);
     displayText(TEAM_1_SCORE, -0.5f, -0.5f);
     displayText(TEAM_2_SCORE, 0.5f, -0.5f);
 }
 
-void drawWinner(){
+void drawWinner()
+{
     drawRectangle(-0.3f, -1.0f, 0.3f, -0.8f);
     displayText(WINNER, 0.0f, -0.9f);
 }
 
-void redraw(){
+void redraw()
+{
 
     glClear(GL_COLOR_BUFFER_BIT);
 
     drawRound();
 
     drawParent();
-    
+
     drawRangeFile();
 
     drawTeams();
- 
+
     drawCoprocessor();
-    
+
     drawScores();
 
     drawWinner();
 }
-
 
 void display()
 {
@@ -147,13 +154,12 @@ void display()
     drawRangeFile();
 
     drawTeams();
- 
+
     drawCoprocessor();
-    
+
     drawScores();
 
     drawWinner();
-
 
     // Flush drawing command buffer to make drawing happen asap.
     glFlush();

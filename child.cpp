@@ -60,11 +60,6 @@ void beginSignalCatcher(int theSig) // generateValue
     generatedNumFile << value;
 
     generatedNumFile.close();
- 
 
     kill(getppid(), SIGUSR1);
-  
-
-    // // give a double
-    // // write double on file
 }
