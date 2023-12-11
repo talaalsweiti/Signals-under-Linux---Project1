@@ -27,8 +27,7 @@ cd Signals-under-Linux---Project1
 
 3. Compile the code:
 ```
-gcc -o parent parent.c -lm -lpthread -lGL -lglut
-gcc -o child child.c -lm
+make
 ```
 
 ### Usage
